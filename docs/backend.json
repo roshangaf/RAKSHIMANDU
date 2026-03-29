@@ -1,0 +1,771 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user account in the Nightcap Nosh application, storing profile information and preferences. It links to an external authentication system (Firebase).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firebaseUid": {
+          "type": "string",
+          "description": "Unique identifier from Firebase Authentication for the associated user account. (Relationship: Firebase 1:1 UserProfile)"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for communication.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's contact phone number. Mandatory for regular users for delivery coordination."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The user's date of birth, mandatory for age verification.",
+          "format": "date"
+        },
+        "ageVerified": {
+          "type": "boolean",
+          "description": "Flag indicating whether the user's age has been successfully verified to comply with liquor sales regulations."
+        },
+        "deliveryAddressIds": {
+          "type": "array",
+          "description": "References to saved delivery addresses for the user. (Relationship: UserProfile N:N Address)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "loyaltyPoints": {
+          "type": "number",
+          "description": "Current loyalty points accumulated by the user for the rewards program."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Flag indicating if the user has administrative privileges for the Admin Dashboard."
+        }
+      },
+      "required": [
+        "id",
+        "firebaseUid",
+        "firstName",
+        "lastName",
+        "email",
+        "phoneNumber",
+        "dateOfBirth",
+        "ageVerified",
+        "loyaltyPoints",
+        "isAdmin"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a single product available in the catalog, including liquors and snacks. Includes details necessary for display and inventory management.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Product entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "brand": {
+          "type": "string",
+          "description": "The brand or distillery of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "The current selling price of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to a high-quality image of the product.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the category this product belongs to (e.g., 'Whiskey', 'Chips'). (Relationship: Category 1:N Product)"
+        },
+        "isAgeRestricted": {
+          "type": "boolean",
+          "description": "Flag indicating if the product requires age verification for purchase (e.g., liquor)."
+        },
+        "productType": {
+          "type": "string",
+          "description": "The general type of the product (e.g., 'liquor', 'snack')."
+        },
+        "stockQuantity": {
+          "type": "number",
+          "description": "The current quantity of the product available in stock."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price",
+        "imageUrl",
+        "categoryId",
+        "isAgeRestricted",
+        "productType",
+        "stockQuantity"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Organizes products into logical groups for easy browsing and discovery within the catalog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Spirits', 'Savory Snacks')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer's purchase request, tracking its status from placement to delivery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Order entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who placed the order. (Relationship: UserProfile 1:N Order)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "The date and time when the order was placed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the order (e.g., 'pending', 'processing', 'out-for-delivery', 'delivered', 'cancelled')."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total monetary amount of the order, including all items and any fees."
+        },
+        "deliveryAddressId": {
+          "type": "string",
+          "description": "Reference to the delivery address specified for this order. (Relationship: Address 1:N Order)"
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the driver assigned to deliver this order. (Relationship: Driver 1:N Order)"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method of payment selected by the customer (e.g., 'cash_on_delivery', 'digital_wallet')."
+        },
+        "expectedDeliveryTime": {
+          "type": "string",
+          "description": "The anticipated date and time for the order delivery.",
+          "format": "date-time"
+        },
+        "actualDeliveryTime": {
+          "type": "string",
+          "description": "The actual date and time when the order was delivered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "orderDate",
+        "status",
+        "totalAmount",
+        "deliveryAddressId",
+        "paymentMethod"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Details a specific product included within an order, capturing quantity and price at the time of purchase.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OrderItem entity."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to the parent order this item belongs to. (Relationship: Order 1:N OrderItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the product being ordered. (Relationship: Product 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product ordered."
+        },
+        "priceAtOrder": {
+          "type": "number",
+          "description": "The price of the product at the moment the order was placed."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "quantity",
+        "priceAtOrder"
+      ]
+    },
+    "Address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Address",
+      "type": "object",
+      "description": "Stores geographical address details, used for user profiles and order deliveries.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Address entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who owns this address. (Relationship: UserProfile 1:N Address)"
+        },
+        "street": {
+          "type": "string",
+          "description": "The street name and house number."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city of the address."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state or province of the address."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "The postal or zip code of the address."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country of the address."
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "Flag indicating if this is the user's default delivery address."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "street",
+        "city",
+        "state",
+        "zipCode",
+        "country"
+      ]
+    },
+    "Driver": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Driver",
+      "type": "object",
+      "description": "Represents a delivery driver responsible for fulfilling orders, including their current location for real-time tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Driver entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The driver's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The driver's last name."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The driver's contact phone number."
+        },
+        "currentLatitude": {
+          "type": "number",
+          "description": "The current latitude coordinate of the driver's location for real-time tracking."
+        },
+        "currentLongitude": {
+          "type": "number",
+          "description": "The current longitude coordinate of the driver's location for real-time tracking."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current operational status of the driver (e.g., 'available', 'on_delivery', 'offline')."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "contactNumber",
+        "status"
+      ]
+    },
+    "ChatSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatSession",
+      "type": "object",
+      "description": "Represents a customer support chat conversation between a user and an agent.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatSession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who initiated the chat session. (Relationship: UserProfile 1:N ChatSession)"
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the support agent handling the session. (Relationship: UserProfile 1:N ChatSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The date and time when the chat session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The date and time when the chat session ended or was closed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the chat session (e.g., 'open', 'closed', 'resolved')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "status"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents an individual message within a customer support chat session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "chatSessionId": {
+          "type": "string",
+          "description": "Reference to the chat session this message belongs to. (Relationship: ChatSession 1:N ChatMessage)"
+        },
+        "senderId": {
+          "type": "string",
+          "description": "Reference to the UserProfile (user or agent) who sent this message. (Relationship: UserProfile 1:N ChatMessage)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the message was sent.",
+          "format": "date-time"
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the chat message."
+        }
+      },
+      "required": [
+        "id",
+        "chatSessionId",
+        "senderId",
+        "timestamp",
+        "content"
+      ]
+    },
+    "Reward": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reward",
+      "type": "object",
+      "description": "Defines a specific reward offered as part of the loyalty program.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Reward entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the reward (e.g., '10% Off Next Order', 'Free Snack')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the reward and its benefits."
+        },
+        "pointsRequired": {
+          "type": "number",
+          "description": "The number of loyalty points required to claim this reward."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of reward (e.g., 'discount', 'free_item', 'gift_hamper')."
+        },
+        "value": {
+          "type": "number",
+          "description": "The monetary value or percentage of the reward (e.g., 10 for 10% off, 5.99 for a free item's price)."
+        },
+        "validUntil": {
+          "type": "string",
+          "description": "The date and time until which the reward is valid, if applicable.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "pointsRequired",
+        "type",
+        "value"
+      ]
+    },
+    "UserReward": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserReward",
+      "type": "object",
+      "description": "Tracks a specific reward earned or claimed by a user within the loyalty program.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserReward entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who earned this reward. (Relationship: UserProfile 1:N UserReward)"
+        },
+        "rewardId": {
+          "type": "string",
+          "description": "Reference to the specific reward definition. (Relationship: Reward 1:N UserReward)"
+        },
+        "earnedDate": {
+          "type": "string",
+          "description": "The date and time when the user earned this reward.",
+          "format": "date-time"
+        },
+        "redeemedDate": {
+          "type": "string",
+          "description": "The date and time when the user redeemed this reward.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the user's reward (e.g., 'earned', 'redeemed', 'expired', 'available')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "rewardId",
+        "earnedDate",
+        "status"
+      ]
+    },
+    "Pairing": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pairing",
+      "type": "object",
+      "description": "Represents a curated pairing of a liquor product and a snack product, intended for easy discovery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Pairing entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for the pairing (e.g., 'Whiskey & Dark Chocolate')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief explanation of why these products pair well together."
+        },
+        "liquorProductId": {
+          "type": "string",
+          "description": "Reference to the liquor product in this pairing. (Relationship: Product 1:N Pairing)"
+        },
+        "snackProductId": {
+          "type": "string",
+          "description": "Reference to the snack product in this pairing. (Relationship: Product 1:N Pairing)"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to a high-quality image representing the pairing.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "liquorProductId",
+        "snackProductId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user profiles. The document ID is the user's Firebase UID (`userId`). Access is restricted to the owning user and administrators. Includes an `isAdmin` field for role-based access, but true admin access will be managed via the `/admin_roles` collection."
+        }
+      },
+      {
+        "path": "/users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "Stores delivery addresses belonging to a specific user. The document ID is `addressId`. Includes denormalized `userId` matching the parent for authorization independence. Accessible only by the owning user and administrators.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the address."
+            },
+            {
+              "name": "addressId",
+              "description": "The unique identifier of the address document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/userRewards/{userRewardId}",
+        "definition": {
+          "entityName": "UserReward",
+          "schema": {
+            "$ref": "#/backend/entities/UserReward"
+          },
+          "description": "Tracks loyalty rewards earned or claimed by a specific user. The document ID is `userRewardId`. Includes denormalized `userId` matching the parent for authorization independence. Accessible only by the owning user and administrators.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who earned/claimed the reward."
+            },
+            {
+              "name": "userRewardId",
+              "description": "The unique identifier of the user reward document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores product categories. Globally readable by all users. Write access is restricted to administrators.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier of the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product details. Globally readable by all users. Write access is restricted to administrators.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier of the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/pairings/{pairingId}",
+        "definition": {
+          "entityName": "Pairing",
+          "schema": {
+            "$ref": "#/backend/entities/Pairing"
+          },
+          "description": "Stores curated product pairings. Globally readable by all users. Write access is restricted to administrators.",
+          "params": [
+            {
+              "name": "pairingId",
+              "description": "The unique identifier of the pairing."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/rewards/{rewardId}",
+        "definition": {
+          "entityName": "Reward",
+          "schema": {
+            "$ref": "#/backend/entities/Reward"
+          },
+          "description": "Stores definitions of loyalty program rewards. Globally readable by all users. Write access is restricted to administrators.",
+          "params": [
+            {
+              "name": "rewardId",
+              "description": "The unique identifier of the reward definition."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores customer orders. Includes denormalized `userId` for customer access and `driverId` for assigned driver access, enabling authorization independence. The `status` field provides explicit state modeling. Accessible to the owning user, assigned driver, and administrators.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "The unique identifier of the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/orders/{orderId}/orderItems/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Stores individual items within a specific order. Includes denormalized `userId` and `driverId` from the parent `Order` for authorization independence. Accessible to the owning user, assigned driver, and administrators, mirroring parent order access.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "The unique identifier of the parent order."
+            },
+            {
+              "name": "orderItemId",
+              "description": "The unique identifier of the order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/drivers/{driverId}",
+        "definition": {
+          "entityName": "Driver",
+          "schema": {
+            "$ref": "#/backend/entities/Driver"
+          },
+          "description": "Stores driver profiles. The document ID is `driverId`. The `status` field provides explicit state modeling. Accessible to the owning driver and administrators.",
+          "params": [
+            {
+              "name": "driverId",
+              "description": "The unique identifier of the driver."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chatSessions/{chatSessionId}",
+        "definition": {
+          "entityName": "ChatSession",
+          "schema": {
+            "$ref": "#/backend/entities/ChatSession"
+          },
+          "description": "Stores customer support chat sessions. Includes denormalized `userId` for customer access and `agentId` for assigned agent access, enabling authorization independence. The `status` field provides explicit state modeling. Accessible to the owning user, assigned agent, and administrators.",
+          "params": [
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the chat session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chatSessions/{chatSessionId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores individual messages within a chat session. Includes denormalized `userId` and `agentId` from the parent `ChatSession` for authorization independence. Accessible to the owning user, assigned agent, and administrators, mirroring parent chat session access.",
+          "params": [
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the parent chat session."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the chat message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_roles/{adminUid}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for Database-Backed Access Control (DBAC). Stores the UIDs of users who have administrative privileges. Used by security rules (e.g., `get(/admin_roles/$(request.auth.uid)).exists()`) to grant write access to administrative collections. Documents in this collection can be minimal, e.g., just `id: adminUid`."
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for Nightcap Nosh prioritizes secure, scalable, and debuggable authorization by adhering to the core design principles. The key strategy for achieving **Authorization Independence** is the aggressive denormalization of authorization context directly into the documents that require it. This eliminates the need for expensive and complex `get()` calls in security rules, which can break atomic operations and are difficult to debug.\n\nFor user-specific data such as `UserProfile`, `Address`, and `UserReward`, a hierarchical path structure (`/users/{userId}/...`) is employed. Here, the `userId` from `request.auth.uid` matches the `{userId}` wildcard in the path, inherently securing access to a user's own data. Documents in subcollections like `/users/{userId}/addresses/{addressId}` also contain a `userId` field that mirrors the parent's `userId`, reinforcing ownership and ensuring rules can validate access without traversing up the hierarchy.\n\nFor collaborative or multi-party entities like `Order` and `ChatSession`, a top-level collection (`/orders/{orderId}` and `/chatSessions/{chatSessionId}`) is used. This approach facilitates **Queryable Authorization Patterns (QAPs)**. Instead of relying on a parent document to determine access, each `Order` document explicitly includes `userId` (for the customer) and `driverId` (for the assigned driver). Similarly, each `ChatSession` document contains `userId` (for the customer) and `agentId` (for the support agent). This denormalization allows security rules to directly check `request.auth.uid == resource.data.userId` or `request.auth.uid == resource.data.driverId`/`agentId`, enabling efficient and secure `list` operations without requiring additional `get()` calls to other collections. For `OrderItem` and `ChatMessage` subcollections, this denormalization extends, meaning `userId` and `driverId`/`agentId` are copied from their respective parent `Order` or `ChatSession` into each item/message document. This ensures that even nested documents can be authorized independently.\n\n**Structural Segregation** is applied by using top-level collections for publicly readable entities (`Category`, `Product`, `Pairing`, `Reward`) and a dedicated `/admin_roles/{adminUid}` collection for database-backed access control (DBAC). Admin users' UIDs are stored in `admin_roles`, allowing rules to grant administrative write access by simply checking `get(/admin_roles/$(request.auth.uid)).exists()`. This clear separation ensures that security postures are homogeneous within collections, simplifying rule logic significantly. The `status` field in `Order`, `ChatSession`, and `Driver` documents provides **Explicit State Modeling**, ensuring predictable data behavior and simpler rule conditions based on documented states."
+  }
+}

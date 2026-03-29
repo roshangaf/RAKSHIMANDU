@@ -1,0 +1,94 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- GLOBAL HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHardcodedAdmin() {
+      return isSignedIn() && request.auth.uid == "Q3AAJKZAPvZYvcTEkLatjWP1ftD2";
+    }
+
+    function isAdmin() {
+      // Prioritize the hardcoded bypass for immediate, guaranteed access.
+      // The exists check is now safer because we've isolated the admin_roles rules.
+      return isHardcodedAdmin() || (
+        isSignedIn() && 
+        exists(/databases/(default)/documents/admin_roles/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // Admin Roles - ISOLATED to prevent recursion
+    match /admin_roles/{adminUid} {
+      // Users can always read their own status. 
+      // We avoid calling isAdmin() here to break the infinite recursion loop.
+      allow read: if isSignedIn() && (request.auth.uid == adminUid || isHardcodedAdmin());
+      allow write: if isHardcodedAdmin();
+    }
+
+    // Global Admin Bypass for all other collections
+    match /{document=**} {
+      // This is safe now because admin_roles has its own specific match above
+      // and we handle the hardcoded admin case explicitly.
+      allow read, write: if isAdmin();
+    }
+
+    // User Profiles & Subcollections
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && (isOwner(userId) || isAdmin());
+      
+      match /addresses/{addressId} {
+        allow read, write: if isSignedIn() && (isOwner(userId) || isAdmin());
+      }
+
+      match /userRewards/{userRewardId} {
+        allow read, write: if isSignedIn() && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // Public Collections
+    match /products/{id} { allow read: if true; }
+    match /categories/{id} { allow read: if true; }
+    match /pairings/{id} { allow read: if true; }
+    match /rewards/{id} { allow read: if true; }
+    match /settings/{id} { allow read: if true; }
+
+    // Orders
+    match /orders/{orderId} {
+      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow get: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+
+      match /orderItems/{orderItemId} {
+        allow read: if isSignedIn() && (isAdmin() || get(/databases/(default)/documents/orders/$(orderId)).data.userId == request.auth.uid);
+      }
+    }
+
+    // Chat Sessions
+    match /chatSessions/{chatSessionId} {
+      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid);
+      allow get, update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid);
+      allow create: if isSignedIn();
+
+      match /messages/{messageId} {
+        allow read, create: if isSignedIn();
+      }
+    }
+
+    // Drivers
+    match /drivers/{driverId} {
+      allow read: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == driverId);
+    }
+  }
+}

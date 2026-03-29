@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "spirit-1",
+      "description": "Premium Aged Whiskey",
+      "imageUrl": "https://images.unsplash.com/photo-1613952936180-bd8fdf8c069b?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "whiskey bottle"
+    },
+    {
+      "id": "wine-1",
+      "description": "Deep Red Cabernet",
+      "imageUrl": "https://images.unsplash.com/photo-1562601579-599dec564e06?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "red wine"
+    },
+    {
+      "id": "beer-1",
+      "description": "Craft IPA 6-Pack",
+      "imageUrl": "https://images.unsplash.com/photo-1566633806327-68e152aaf26d?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "craft beer"
+    },
+    {
+      "id": "snack-1",
+      "description": "Gourmet Snacks Selection",
+      "imageUrl": "https://images.unsplash.com/photo-1614735241165-6756e1df61ab?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "gourmet snacks"
+    },
+    {
+      "id": "vape-1",
+      "description": "Vape and Cigarettes",
+      "imageUrl": "https://images.unsplash.com/photo-1530745342582-0795f23ec976?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "vape cigarette"
+    },
+    {
+      "id": "snack-2",
+      "description": "Artisan Cheese Plate",
+      "imageUrl": "https://picsum.photos/seed/snack2/600/800",
+      "imageHint": "cheese platter"
+    },
+    {
+      "id": "hero-delivery",
+      "description": "Late Night Delivery Service",
+      "imageUrl": "https://images.unsplash.com/photo-1607130232670-52123ba5be5c?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "night city"
+    },
+    {
+      "id": "hero-liquor",
+      "description": "Premium Liquor Selection",
+      "imageUrl": "https://images.unsplash.com/photo-1600003014615-fe8e7fa22007?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "liquor bar"
+    },
+    {
+      "id": "club-hero",
+      "description": "Club घ्याम्पे Background",
+      "imageUrl": "https://images.unsplash.com/photo-1758405217697-0c98bcf3b3d6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "luxury bar"
+    }
+  ]
+}
