@@ -36,13 +36,13 @@ export function Footer() {
           {/* Brand and Info */}
           <div className="space-y-6 text-center sm:text-left flex flex-col items-center sm:items-start">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 relative rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="w-7 h-7 relative rounded-full overflow-hidden flex items-center justify-center bg-black">
                 {storeSettings?.logoUrl ? (
                   <Image 
                     src={storeSettings.logoUrl} 
                     alt="Logo" 
                     fill 
-                    className="object-contain"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-black flex items-center justify-center">

@@ -174,9 +174,9 @@ export function Navbar() {
           </Sheet>
           
           <Link href="/" className="flex items-center gap-2 md:gap-4 group">
-            <div className="w-8 h-8 md:w-10 md:h-10 relative rounded-xl overflow-hidden flex items-center justify-center border border-white/10 group-hover:border-accent/50 transition-colors">
+            <div className="w-8 h-8 md:w-10 md:h-10 relative rounded-full overflow-hidden flex items-center justify-center border border-white/10 group-hover:border-accent/50 transition-colors bg-background">
               {storeSettings?.logoUrl ? (
-                <Image src={storeSettings.logoUrl} alt="Logo" fill className="object-contain" />
+                <Image src={storeSettings.logoUrl} alt="Logo" fill className="object-cover" />
               ) : (
                 <div className="w-full h-full bg-primary flex items-center justify-center group-hover:bg-accent transition-colors duration-500">
                   <Moon className="w-5 h-5 md:w-6 md:h-6 text-white" />
