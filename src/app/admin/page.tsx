@@ -862,6 +862,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                   {[
                     { label: "Store Logo URL", field: "logoUrl" as keyof StoreSettings },
+                    { label: "Favicon URL (32x32 PNG)", field: "faviconUrl" as keyof StoreSettings },
                     { label: "Hero Image URL", field: "heroImageUrl" as keyof StoreSettings },
                     { label: "Delivery Background URL", field: "deliveryImageUrl" as keyof StoreSettings },
                     { label: "Club घ्याम्पे Image", field: "clubImageUrl" as keyof StoreSettings },
@@ -882,7 +883,7 @@ export default function AdminDashboard() {
                         />
                         <input
                           type="file"
-                          accept="image/png, image/jpeg"
+                          accept="image/png, image/jpeg, image/x-icon"
                           className="hidden"
                           ref={(el) => { fileInputRefs.current[item.field] = el }}
                           onChange={(e) => handleFileUpload(item.field, e)}

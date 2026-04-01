@@ -60,6 +60,7 @@ export interface StoreSettings {
   isOpen247: boolean;
   preventAdminOrders?: boolean;
   logoUrl?: string;
+  faviconUrl?: string;
   heroImageUrl?: string;
   deliveryImageUrl?: string;
   clubImageUrl?: string;
