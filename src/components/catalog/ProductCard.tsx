@@ -5,12 +5,13 @@ import Image from "next/image";
 import { Product, StoreSettings } from "@/lib/types";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Star, ShoppingCart, Check } from "lucide-react";
+import { Plus, Minus, Star, ShoppingCart, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore, useMemoFirebase, useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useState } from "react";
 import { useCart } from "@/providers/cart-provider";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [qty, setQty] = useState(1);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const firestore = useFirestore();
 
   // Fetch global settings
@@ -48,8 +50,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const decrement = () => setQty(prev => Math.max(1, prev - 1));
 
   return (
-    <Card className="overflow-hidden bg-card border-border product-card-hover group shadow-xl">
-      <div className="relative aspect-[4/5] overflow-hidden">
+    <Card className="overflow-hidden bg-card border-border product-card-hover group shadow-xl flex flex-col h-full">
+      <div className="relative aspect-[4/5] overflow-hidden shrink-0">
         <Image
           src={product.imageUrl}
           alt={product.name}
@@ -71,13 +73,36 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
       </div>
-      <CardContent className="p-3 md:p-6">
+      <CardContent className="p-3 md:p-6 flex-grow flex flex-col">
         <p className="text-[8px] md:text-[10px] text-accent font-bold uppercase tracking-[0.2em] mb-1 md:mb-3">{product.category}</p>
-        <h3 className="text-sm md:text-2xl font-headline line-clamp-2 leading-[0.9] uppercase">{product.name}</h3>
-        <p className="hidden lg:block text-sm text-muted-foreground line-clamp-2 mt-4 leading-relaxed font-light">{product.description}</p>
+        <h3 className="text-sm md:text-2xl font-headline leading-[0.9] uppercase mb-2">{product.name}</h3>
+        
+        <div className="relative">
+          <p className={cn(
+            "text-[10px] md:text-sm text-muted-foreground leading-relaxed font-light transition-all duration-300",
+            !showFullDescription && "line-clamp-2"
+          )}>
+            {product.description}
+          </p>
+          {product.description.length > 50 && (
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                setShowFullDescription(!showFullDescription);
+              }}
+              className="flex items-center gap-1 text-[8px] md:text-[10px] text-accent font-black uppercase tracking-widest mt-1 hover:opacity-70 transition-opacity"
+            >
+              {showFullDescription ? (
+                <>SEE LESS <ChevronUp className="w-3 h-3" /></>
+              ) : (
+                <>SEE MORE <ChevronDown className="w-3 h-3" /></>
+              )}
+            </button>
+          )}
+        </div>
         
         {product.stockQuantity !== undefined && (
-          <div className="flex items-center gap-1.5 mt-2">
+          <div className="flex items-center gap-1.5 mt-auto pt-4">
             <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
             <p className="text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
               Stock: {product.stockQuantity}
@@ -85,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-3 md:p-6 pt-0 flex flex-col gap-3 md:gap-6">
+      <CardFooter className="p-3 md:p-6 pt-0 flex flex-col gap-3 md:gap-6 mt-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
           <div className="flex flex-col">
             <span className="text-sm md:text-2xl font-bold tracking-tighter">NRS {product.price.toLocaleString()}</span>
@@ -122,7 +147,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {isAdded ? (
             <><Check className="mr-1 w-3 h-3 md:w-4 md:h-4" /> ADDED</>
           ) : (
-            <><Plus className="mr-1 w-3 h-3 md:w-4 md:h-4" /> ADD</>
+            <><Plus className="mr-1 w-3 h-3 md:w-4 md:h-4" /> ADD TO CART</>
           )}
         </Button>
       </CardFooter>
