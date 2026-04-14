@@ -25,6 +25,7 @@ export function HeroBanner() {
   const { data: storeSettings } = useDoc<StoreSettings>(settingsRef);
 
   const placeholderHero = PlaceHolderImages.find(img => img.id === 'hero-liquor');
+  const placeholderDelivery = PlaceHolderImages.find(img => img.id === 'hero-delivery');
   const heroImageUrl = storeSettings?.heroImageUrl || placeholderHero?.imageUrl;
 
   const heroTitle = storeSettings?.heroTitle || "CRAVINGS DON'T SLEEP. NEITHER DO WE.";
@@ -115,7 +116,7 @@ export function HeroBanner() {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center border border-white/5 overflow-hidden">
                         <Image 
-                          src="https://picsum.photos/seed/driver1/100/100" 
+                          src={placeholderDelivery?.imageUrl || "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=60"} 
                           alt="Courier" 
                           width={48} 
                           height={48}

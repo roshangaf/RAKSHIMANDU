@@ -11,6 +11,7 @@ import { doc } from "firebase/firestore";
 import { Order } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 interface OrderTrackingPageProps {
   params: Promise<{ id: string }>;
@@ -27,6 +28,7 @@ export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
   }, [firestore, id]);
 
   const { data: order, isLoading } = useDoc<Order>(orderRef);
+  const placeholderDelivery = PlaceHolderImages.find(img => img.id === 'hero-delivery');
 
   if (isLoading) {
     return (
@@ -123,7 +125,11 @@ export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
             <div className="flex items-center justify-between bg-white/5 p-4 rounded-xl">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden border border-white/10">
-                  <img src="https://picsum.photos/seed/shere/100/100" alt="Driver" className="object-cover" />
+                  <img 
+                    src={placeholderDelivery?.imageUrl || "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=60"} 
+                    alt="Driver" 
+                    className="object-cover" 
+                  />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Your Courier</p>
