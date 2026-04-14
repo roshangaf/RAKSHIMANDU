@@ -1,9 +1,20 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from "react";
 import { PhoneCall } from "lucide-react";
+import { useFirestore, useMemoFirebase, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { StoreSettings } from "@/lib/types";
 
 export function QuickOrderFloating() {
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "store_config"), [firestore]);
+  const { data: storeSettings } = useDoc<StoreSettings>(settingsRef);
+  
+  const contactNumber = storeSettings?.contactNumber || "+9779709047230";
+  const telLink = `tel:${contactNumber.replace(/\s/g, '')}`;
+
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
@@ -92,7 +103,7 @@ export function QuickOrderFloating() {
       onTouchStart={onTouchStart}
     >
       <a 
-        href="tel:+9779709047230" 
+        href={telLink} 
         onClick={handleLinkClick}
         className="flex items-center gap-4 bg-white text-black pl-5 pr-6 py-3 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-2 border-black hover:bg-black hover:text-white hover:border-white transition-all duration-300 group cursor-pointer active:scale-95"
       >

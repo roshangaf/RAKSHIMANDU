@@ -12,7 +12,7 @@ import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBl
 import { collection, doc, query, orderBy } from "firebase/firestore";
 import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap, Globe, MessageCircle, Trophy
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap, Globe, MessageCircle, Trophy, Phone
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
@@ -549,6 +549,10 @@ export default function AdminDashboard() {
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase opacity-50">WhatsApp Number</label>
                       <Input value={storeSettings?.whatsappNumber || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {whatsappNumber: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="+977 98XXXXXXXX" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Hotline / Primary Contact</label>
+                      <Input value={storeSettings?.contactNumber || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {contactNumber: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="+977 9709047230" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase opacity-50">Instagram URL</label>
