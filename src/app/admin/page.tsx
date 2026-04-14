@@ -12,7 +12,7 @@ import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBl
 import { collection, doc, query, orderBy } from "firebase/firestore";
 import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap, Globe, MessageCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
@@ -212,12 +212,12 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="overview" className="space-y-10">
           <TabsList className="bg-card border border-white/5 h-auto p-1 grid grid-cols-3 md:grid-cols-6 gap-1 rounded-2xl">
-            <TabsTrigger value="overview" className="flex gap-2"><BarChart3 className="w-4 h-4" /> OVERVIEW</TabsTrigger>
-            <TabsTrigger value="products" className="flex gap-2"><Package className="w-4 h-4" /> ITEMS</TabsTrigger>
-            <TabsTrigger value="combos" className="flex gap-2"><Wine className="w-4 h-4" /> COMBOS</TabsTrigger>
-            <TabsTrigger value="orders" className="flex gap-2"><ShoppingBag className="w-4 h-4" /> ORDERS</TabsTrigger>
-            <TabsTrigger value="users" className="flex gap-2"><UsersIcon className="w-4 h-4" /> USERS</TabsTrigger>
-            <TabsTrigger value="settings" className="flex gap-2"><Settings className="w-4 h-4" /> SYSTEM</TabsTrigger>
+            <TabsTrigger value="overview" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><BarChart3 className="w-4 h-4" /> Overview</TabsTrigger>
+            <TabsTrigger value="products" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><Package className="w-4 h-4" /> Items</TabsTrigger>
+            <TabsTrigger value="combos" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><Wine className="w-4 h-4" /> Combos</TabsTrigger>
+            <TabsTrigger value="orders" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><ShoppingBag className="w-4 h-4" /> Orders</TabsTrigger>
+            <TabsTrigger value="users" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><UsersIcon className="w-4 h-4" /> Users</TabsTrigger>
+            <TabsTrigger value="settings" className="flex gap-2 uppercase text-[10px] tracking-widest font-bold"><Settings className="w-4 h-4" /> System</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-10">
@@ -232,10 +232,10 @@ export default function AdminDashboard() {
               ].map((stat, i) => (
                 <Card key={i} className="bg-card border-white/5 p-6 space-y-2">
                   <div className="flex justify-between items-start">
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-50">{stat.label}</p>
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-50">{stat.label}</p>
+                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
                   </div>
-                  <p className="text-4xl font-headline tracking-tight">{stat.value}</p>
+                  <p className="text-3xl font-headline tracking-tight">{stat.value}</p>
                 </Card>
               ))}
             </div>
@@ -468,47 +468,107 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-12">
-            <Card className="bg-card border-white/5 p-8 space-y-10">
-              <section className="space-y-6">
-                <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Branding & Identity</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Store Name</label>
-                    <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} className="rounded-xl h-12" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Logo URL / Upload</label>
-                    <div className="flex gap-2">
-                      <Input value={storeSettings?.logoUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {logoUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
-                      <Button onClick={() => triggerUpload('settings', 'logoUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-card border-white/5 p-8 space-y-10">
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2 flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-accent" /> Branding & Identity
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Store Name</label>
+                      <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} className="rounded-xl h-12" />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Delivery Fee (NRS)</label>
-                    <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} className="rounded-xl h-12" />
-                  </div>
-                </div>
-              </section>
-              
-              <section className="space-y-6">
-                <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Category Imagery</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {['spirits', 'wine', 'beer', 'snacks', 'vapes'].map(cat => (
-                    <div key={cat} className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">{cat} IMAGE URL / UPLOAD</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Delivery Fee (NRS)</label>
+                      <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} className="rounded-xl h-12" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Logo URL / Upload</label>
                       <div className="flex gap-2">
-                        <Input 
-                          value={(storeSettings as any)?.[`${cat}ImageUrl`] || ""} 
-                          onChange={e => setDocumentNonBlocking(settingsRef!, {[`${cat}ImageUrl`]: e.target.value}, {merge: true})} 
-                          className="rounded-xl h-12 flex-1"
-                        />
-                        <Button onClick={() => triggerUpload('settings', `${cat}ImageUrl`)} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                        <Input value={storeSettings?.logoUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {logoUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
+                        <Button onClick={() => triggerUpload('settings', 'logoUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            </Card>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Favicon URL / Upload</label>
+                      <div className="flex gap-2">
+                        <Input value={storeSettings?.faviconUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {faviconUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
+                        <Button onClick={() => triggerUpload('settings', 'faviconUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2 flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-accent" /> Hero & Homepage
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Hero Title</label>
+                      <Input value={storeSettings?.heroTitle || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroTitle: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="CRAVINGS DON'T SLEEP. NEITHER DO WE." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Hero Subtitle</label>
+                      <Textarea value={storeSettings?.heroSubtitle || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroSubtitle: e.target.value}, {merge: true})} className="rounded-xl min-h-[80px]" placeholder="Premium drinks and snacks delivered..." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Hero Background URL / Upload</label>
+                      <div className="flex gap-2">
+                        <Input value={storeSettings?.heroImageUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroImageUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
+                        <Button onClick={() => triggerUpload('settings', 'heroImageUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </Card>
+
+              <Card className="bg-card border-white/5 p-8 space-y-10">
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-accent" /> Social Presence
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">WhatsApp Number</label>
+                      <Input value={storeSettings?.whatsappNumber || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {whatsappNumber: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="+977 98XXXXXXXX" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Instagram URL</label>
+                      <Input value={storeSettings?.instagramUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {instagramUrl: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="https://instagram.com/..." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Facebook URL</label>
+                      <Input value={storeSettings?.facebookUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {facebookUrl: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="https://facebook.com/..." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Support Email</label>
+                      <Input value={storeSettings?.supportEmail || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {supportEmail: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="support@rakshimandu.com" />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Category Imagery</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {['spirits', 'wine', 'beer', 'snacks', 'vapes'].map(cat => (
+                      <div key={cat} className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase opacity-50 tracking-widest">{cat} IMAGE</label>
+                        <div className="flex gap-2">
+                          <Input 
+                            value={(storeSettings as any)?.[`${cat}ImageUrl`] || ""} 
+                            onChange={e => setDocumentNonBlocking(settingsRef!, {[`${cat}ImageUrl`]: e.target.value}, {merge: true})} 
+                            className="rounded-xl h-10 flex-1 text-xs"
+                          />
+                          <Button onClick={() => triggerUpload('settings', `${cat}ImageUrl`)} variant="secondary" className="h-10 w-10 rounded-xl shrink-0"><Upload className="w-3 h-3" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
