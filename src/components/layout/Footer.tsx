@@ -47,7 +47,7 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="font-headline text-lg uppercase">NAVIGATE</h4>
             <ul className="space-y-2 text-xs font-bold uppercase opacity-50">
-              <li><Link href="/products" className="hover:text-primary transition-colors">Catalog</Link></li>
+              <li><Link href="/products" className="hover:text-primary transition-colors">items</Link></li>
               <li><Link href="/pairings" className="hover:text-primary transition-colors">Combos</Link></li>
               <li><Link href="/loyalty" className="hover:text-primary transition-colors">Rewards</Link></li>
             </ul>
