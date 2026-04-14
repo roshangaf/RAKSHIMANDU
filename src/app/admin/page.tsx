@@ -414,7 +414,15 @@ export default function AdminDashboard() {
                           {order.status}
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-accent">{order.customerName}</p>
+                      <div className="flex flex-col">
+                        <p className="text-sm font-bold text-accent uppercase tracking-tighter">{order.customerName}</p>
+                        {order.customerPhone && (
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 font-bold">
+                            <Phone className="w-3 h-3 text-accent" /> {order.customerPhone} 
+                            {order.userId === "guest" && <span className="text-[8px] bg-white/10 px-1 rounded ml-1">GUEST</span>}
+                          </p>
+                        )}
+                      </div>
                       <p className="text-xs opacity-50">{new Date(order.orderDate).toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col md:items-end gap-2">
