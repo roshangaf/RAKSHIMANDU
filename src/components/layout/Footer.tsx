@@ -40,7 +40,6 @@ export function Footer() {
             <ul className="space-y-2 text-xs font-bold uppercase opacity-50">
               <li><Link href="/support" className="hover:text-primary transition-colors">Support</Link></li>
               <li><Link href="/faqs" className="hover:text-primary transition-colors">FAQs</Link></li>
-              <li><Link href="/account" className="hover:text-primary transition-colors">Account</Link></li>
             </ul>
           </div>
 
@@ -50,6 +49,7 @@ export function Footer() {
               <li><Link href="/products" className="hover:text-primary transition-colors">items</Link></li>
               <li><Link href="/pairings" className="hover:text-primary transition-colors">Combos</Link></li>
               <li><Link href="/loyalty" className="hover:text-primary transition-colors">Rewards</Link></li>
+              <li><Link href="/account" className="hover:text-primary transition-colors">Account</Link></li>
             </ul>
           </div>
 
