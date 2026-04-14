@@ -14,7 +14,6 @@ service cloud.firestore {
 
     function isAdmin() {
       // Prioritize the hardcoded bypass for immediate, guaranteed access.
-      // The exists check is now safer because we've isolated the admin_roles rules.
       return isHardcodedAdmin() || (
         isSignedIn() && 
         exists(/databases/(default)/documents/admin_roles/$(request.auth.uid))
@@ -33,13 +32,6 @@ service cloud.firestore {
       // We avoid calling isAdmin() here to break the infinite recursion loop.
       allow read: if isSignedIn() && (request.auth.uid == adminUid || isHardcodedAdmin());
       allow write: if isHardcodedAdmin();
-    }
-
-    // Global Admin Bypass for all other collections
-    match /{document=**} {
-      // This is safe now because admin_roles has its own specific match above
-      // and we handle the hardcoded admin case explicitly.
-      allow read, write: if isAdmin();
     }
 
     // User Profiles & Subcollections
@@ -62,7 +54,7 @@ service cloud.firestore {
     match /rewards/{id} { allow read: if true; }
     match /settings/{id} { allow read: if true; }
 
-    // Orders
+    // Orders - Supports Guest Checkout
     match /orders/{orderId} {
       // List remains restricted to authenticated owners or admins
       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
@@ -73,9 +65,11 @@ service cloud.firestore {
       // Allow anyone to create an order (supports guest checkout)
       allow create: if true;
       
+      // Only admins can modify existing orders
       allow update, delete: if isAdmin();
 
       match /orderItems/{orderItemId} {
+        // Items inherit the parent order's access logic
         allow read: if (isSignedIn() && (isAdmin() || get(/databases/(default)/documents/orders/$(orderId)).data.userId == request.auth.uid)) || get(/databases/(default)/documents/orders/$(orderId)).data.userId == "guest";
       }
     }
@@ -95,6 +89,11 @@ service cloud.firestore {
     match /drivers/{driverId} {
       allow read: if isSignedIn();
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == driverId);
+    }
+
+    // Global Admin Bypass for all other collections and operations not matched above
+    match /{document=**} {
+      allow read, write: if isAdmin();
     }
   }
 }
