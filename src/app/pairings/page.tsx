@@ -44,12 +44,12 @@ export default function PairingsPage() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-16">
-        <header className="max-w-3xl mb-16 space-y-6">
-          <div className="flex items-center gap-3 text-accent animate-pulse">
+        <header className="max-w-3xl mb-16 space-y-6 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3 text-accent animate-pulse">
             <Sparkles className="w-6 h-6" />
             <span className="text-xs font-bold uppercase tracking-[0.4em]">Expertly Curated</span>
           </div>
-          <h1 className="text-6xl md:text-8xl font-headline tracking-tighter leading-[0.85] flex flex-wrap items-baseline gap-x-4">
+          <h1 className="text-6xl md:text-8xl font-headline tracking-tighter leading-[0.85] flex flex-wrap items-baseline justify-center md:justify-start gap-x-4">
             PERFECT <span className="text-accent text-[0.7em] md:text-[0.65em] opacity-90 leading-none">कम्बो</span>
           </h1>
           <p className="text-muted-foreground text-xl font-light leading-relaxed">
@@ -64,7 +64,7 @@ export default function PairingsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             {pairings?.map((pairing) => (
-              <div key={pairing.id} className="bg-card border border-white/5 rounded-[3rem] p-10 md:p-12 space-y-10 hover:border-accent/20 transition-all group shadow-3xl">
+              <div key={pairing.id} className="bg-card border border-white/5 rounded-[3rem] p-10 md:p-12 space-y-10 hover:border-accent/20 transition-all group shadow-3xl flex flex-col items-center md:items-start text-center md:text-left">
                 <div className="w-32 h-32 md:w-48 md:h-48 rounded-[2.5rem] bg-accent/5 flex items-center justify-center border border-white/5 group-hover:bg-accent transition-colors duration-700 overflow-hidden shadow-2xl">
                   {pairing.imageUrl ? (
                     <img src={pairing.imageUrl} alt={pairing.name} className="w-full h-full object-cover" />
@@ -76,7 +76,7 @@ export default function PairingsPage() {
                   <h3 className="text-4xl md:text-6xl font-headline tracking-wide uppercase leading-none">{pairing.name}</h3>
                   <p className="text-muted-foreground font-light text-lg md:text-xl leading-relaxed">{pairing.description}</p>
                 </div>
-                <div className="pt-8 border-t border-white/10">
+                <div className="pt-8 border-t border-white/10 w-full">
                   <Button 
                     onClick={() => setViewingPairing(pairing)}
                     variant="outline" 
@@ -100,8 +100,8 @@ export default function PairingsPage() {
 
         <Dialog open={!!viewingPairing} onOpenChange={(open) => !open && setViewingPairing(null)}>
           <DialogContent className="max-w-5xl bg-card border-white/10 p-0 overflow-y-auto max-h-[90vh] rounded-[3rem] flex flex-col">
-            <DialogHeader className="p-8 md:p-10 pb-4 shrink-0">
-              <div className="flex items-center gap-2 text-accent mb-2">
+            <DialogHeader className="p-8 md:p-10 pb-4 shrink-0 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 text-accent mb-2">
                 <Wine className="w-5 h-5" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.4em]">Inside the Combo</span>
               </div>
@@ -117,7 +117,7 @@ export default function PairingsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12 items-start">
                 {selectedLiquor ? (
                   <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 ml-1">THE SPIRIT</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 ml-1 text-center sm:text-left">THE SPIRIT</p>
                     <ProductCard product={selectedLiquor} />
                   </div>
                 ) : (
@@ -128,7 +128,7 @@ export default function PairingsPage() {
 
                 {selectedSnack ? (
                   <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 ml-1">THE PAIRING</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 ml-1 text-center sm:text-left">THE PAIRING</p>
                     <ProductCard product={selectedSnack} />
                   </div>
                 ) : (
@@ -145,7 +145,7 @@ export default function PairingsPage() {
           <div className="absolute top-0 right-0 p-12 opacity-10">
             <Wine className="w-96 h-96 -rotate-12" />
           </div>
-          <div className="relative z-10 max-w-3xl text-center md:text-left space-y-8">
+          <div className="relative z-10 max-w-3xl text-center md:text-left space-y-8 flex flex-col items-center md:items-start">
             <h2 className="text-5xl md:text-8xl font-headline leading-none uppercase">WANT A CUSTOM <span className="text-accent">PAIRING?</span></h2>
             <p className="text-muted-foreground text-xl md:text-2xl font-light leading-relaxed">
               Chat with our night sommelier. They're online now and ready to suggest the perfect snack for your choice of spirit.
