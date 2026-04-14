@@ -12,7 +12,7 @@ import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBl
 import { collection, doc, query, orderBy } from "firebase/firestore";
 import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap, Globe, MessageCircle
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap, Globe, MessageCircle, Trophy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
@@ -511,6 +511,29 @@ export default function AdminDashboard() {
                       <div className="flex gap-2">
                         <Input value={storeSettings?.heroImageUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroImageUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
                         <Button onClick={() => triggerUpload('settings', 'heroImageUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-accent" /> Loyalty Club
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Club Name</label>
+                      <Input value={storeSettings?.clubName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {clubName: e.target.value}, {merge: true})} className="rounded-xl h-12" placeholder="CLUB घ्याम्पे" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Club Description</label>
+                      <Textarea value={storeSettings?.clubDescription || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {clubDescription: e.target.value}, {merge: true})} className="rounded-xl min-h-[80px]" placeholder="The elite society of late-night enthusiasts..." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">Club Hero Image URL / Upload</label>
+                      <div className="flex gap-2">
+                        <Input value={storeSettings?.clubImageUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {clubImageUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
+                        <Button onClick={() => triggerUpload('settings', 'clubImageUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </div>
