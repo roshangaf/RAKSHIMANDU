@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -55,15 +56,34 @@ export function Footer() {
 
           <div className="space-y-6">
             <h4 className="font-headline text-lg uppercase">CONTACT</h4>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <a href={`tel:${storeSettings?.contactNumber || "+9779709047230"}`} className="flex items-center gap-3 group">
-                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center group-hover:bg-primary transition-colors">
-                    <Phone className="w-4 h-4 text-white" />
+            <div className="space-y-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <a href={`tel:${storeSettings?.contactNumber || "+9779709047230"}`} className="flex items-center gap-3 group">
+                    <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center group-hover:bg-primary transition-colors">
+                      <Phone className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-bold">{storeSettings?.contactNumber || "+977 9709047230"}</span>
+                  </a>
+                  <p className="text-[10px] font-bold uppercase opacity-40 ml-11">24/7 Hotline</p>
+                </div>
+
+                {storeSettings?.whatsappNumber && (
+                  <div className="flex flex-col gap-1">
+                    <a 
+                      href={`https://wa.me/${storeSettings.whatsappNumber.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-3 group"
+                    >
+                      <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                        <MessageCircle className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-bold">{storeSettings.whatsappNumber}</span>
+                    </a>
+                    <p className="text-[10px] font-bold uppercase opacity-40 ml-11">WhatsApp Order</p>
                   </div>
-                  <span className="text-sm font-bold">{storeSettings?.contactNumber || "+977 9709047230"}</span>
-                </a>
-                <p className="text-[10px] font-bold uppercase opacity-40 ml-11">24/7 Hotline</p>
+                )}
               </div>
               
               <div className="flex gap-4 items-center">
@@ -78,7 +98,7 @@ export function Footer() {
                   </a>
                 )}
                 {storeSettings?.whatsappNumber && (
-                  <a href={`https://wa.me/${storeSettings.whatsappNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-primary transition-all hover:scale-110">
+                  <a href={`https://wa.me/${storeSettings.whatsappNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-green-600 transition-all hover:scale-110">
                     <MessageCircle className="w-5 h-5 text-white" />
                   </a>
                 )}
