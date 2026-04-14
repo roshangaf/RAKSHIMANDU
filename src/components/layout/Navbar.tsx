@@ -134,6 +134,10 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="bg-background">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Access site sections like items, combos, and rewards.</SheetDescription>
+              </SheetHeader>
               <div className="flex flex-col gap-10 mt-12">
                 {isAdmin && (
                   <Link href="/admin" className="text-3xl font-headline text-accent flex items-center gap-3">
@@ -196,12 +200,15 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent className="bg-background flex flex-col p-6 h-full overflow-hidden">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-4xl font-headline text-accent">CART</h2>
-                  <Button variant="ghost" size="icon" onClick={() => setIsSheetOpen(false)}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
+                <SheetHeader className="mb-8">
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="text-4xl font-headline text-accent uppercase">CART</SheetTitle>
+                    <Button variant="ghost" size="icon" onClick={() => setIsSheetOpen(false)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <SheetDescription className="sr-only">Review your selected items and proceed to checkout.</SheetDescription>
+                </SheetHeader>
                 
                 <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                   {items.length === 0 ? (
