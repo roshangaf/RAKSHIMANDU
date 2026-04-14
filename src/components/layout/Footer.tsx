@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -40,7 +39,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs font-bold uppercase opacity-50">
               <li><Link href="/support" className="hover:text-primary transition-colors">Support</Link></li>
               <li><Link href="/faqs" className="hover:text-primary transition-colors">FAQs</Link></li>
-              <li><Link href="/faqs" className="hover:text-primary transition-colors">Zones</Link></li>
+              <li><Link href="/zones" className="hover:text-primary transition-colors">Zones</Link></li>
             </ul>
           </div>
 
