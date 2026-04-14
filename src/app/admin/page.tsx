@@ -9,24 +9,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, useDoc, setDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, orderBy, limit } from "firebase/firestore";
+import { collection, doc, query, orderBy } from "firebase/firestore";
 import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Phone, Instagram, Facebook, MessageSquare, Image as ImageIcon,
-  BarChart3, Users as UsersIcon, Wine, Package, ShoppingBag, DollarSign, TrendingUp, Search
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeUploadField, setActiveUploadField] = useState<{ type: 'product' | 'pairing' | 'settings', field: string } | null>(null);
   
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -82,37 +82,42 @@ export default function AdminDashboard() {
   const { data: pairings } = useCollection<Pairing>(pairingsQuery);
   const { data: storeSettings } = useDoc<StoreSettings>(settingsRef);
 
-  // Analytics Calculation
+  // Analytics
   const stats = useMemo(() => {
     if (!orders || !products || !users) return null;
     const completedOrders = orders.filter(o => o.status === 'completed');
     const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-    
-    // Group sales by date for chart
     const salesByDate = completedOrders.reduce((acc: any, order) => {
       const date = new Date(order.orderDate).toLocaleDateString();
       acc[date] = (acc[date] || 0) + order.totalAmount;
       return acc;
     }, {});
-
     const chartData = Object.entries(salesByDate).map(([date, total]) => ({ date, total })).slice(-7);
 
-    return {
-      totalRevenue,
-      orderCount: orders.length,
-      userCount: users.length,
-      productCount: products.length,
-      chartData
-    };
+    return { totalRevenue, orderCount: orders.length, userCount: users.length, productCount: products.length, chartData };
   }, [orders, products, users]);
 
-  const handleFileUpload = (field: keyof StoreSettings, e: React.ChangeEvent<HTMLInputElement>) => {
+  const triggerUpload = (type: 'product' | 'pairing' | 'settings', field: string) => {
+    setActiveUploadField({ type, field });
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !activeUploadField) return;
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      setDocumentNonBlocking(settingsRef!, { [field]: reader.result as string }, { merge: true });
-      toast({ title: "Image Uploaded" });
+      const result = reader.result as string;
+      if (activeUploadField.type === 'product') {
+        setProductFormData(prev => ({ ...prev, [activeUploadField.field]: result }));
+      } else if (activeUploadField.type === 'pairing') {
+        setComboFormData(prev => ({ ...prev, [activeUploadField.field]: result }));
+      } else if (activeUploadField.type === 'settings') {
+        setDocumentNonBlocking(settingsRef!, { [activeUploadField.field]: result }, { merge: true });
+      }
+      toast({ title: "Image Uploaded Successfully" });
+      setActiveUploadField(null);
     };
     reader.readAsDataURL(file);
   };
@@ -166,6 +171,13 @@ export default function AdminDashboard() {
   return (
     <main className="min-h-screen bg-background pb-20">
       <Navbar />
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/png, image/jpeg" 
+        onChange={handleFileUpload} 
+      />
       <div className="container mx-auto px-4 pt-28">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
@@ -208,11 +220,9 @@ export default function AdminDashboard() {
             </div>
 
             <Card className="bg-card border-white/5 p-8">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-headline uppercase flex items-center gap-2">
-                  <TrendingUp className="text-accent w-6 h-6" /> Sales Performance
-                </h3>
-              </div>
+              <h3 className="text-2xl font-headline uppercase flex items-center gap-2 mb-8">
+                <TrendingUp className="text-accent w-6 h-6" /> Sales Performance
+              </h3>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={stats?.chartData}>
@@ -225,10 +235,7 @@ export default function AdminDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                     <XAxis dataKey="date" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
                     <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `NRS ${val}`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #333', borderRadius: '12px' }}
-                      itemStyle={{ color: 'white', fontWeight: 'bold' }}
-                    />
+                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #333', borderRadius: '12px' }} itemStyle={{ color: 'white', fontWeight: 'bold' }} />
                     <Area type="monotone" dataKey="total" stroke="white" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -239,7 +246,7 @@ export default function AdminDashboard() {
           <TabsContent value="products" className="space-y-10">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-headline uppercase">Items In Cellar</h2>
-              <Button onClick={() => setIsAddingProduct(true)} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> ADD ITEM</Button>
+              <Button onClick={() => {setIsAddingProduct(true); setProductFormData({name: "", brand: "", description: "", price: 0, category: "Spirits", imageUrl: "", rating: 5, isAgeRestricted: true, stockStatus: 'in-stock', stockQuantity: 0}); setEditingProductId(null);}} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> ADD ITEM</Button>
             </div>
 
             {isAddingProduct && (
@@ -247,15 +254,15 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Item Name</label>
-                    <Input value={productFormData.name} onChange={e => setProductFormData({...productFormData, name: e.target.value})} className="bg-background border-white/10" />
+                    <Input value={productFormData.name} onChange={e => setProductFormData({...productFormData, name: e.target.value})} className="bg-background border-white/10 h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Price (NRS)</label>
-                    <Input type="number" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: Number(e.target.value)})} className="bg-background border-white/10" />
+                    <Input type="number" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: Number(e.target.value)})} className="bg-background border-white/10 h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Category</label>
-                    <select value={productFormData.category} onChange={e => setProductFormData({...productFormData, category: e.target.value as any})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
+                    <select value={productFormData.category} onChange={e => setProductFormData({...productFormData, category: e.target.value as any})} className="w-full h-12 bg-background border border-white/10 rounded-xl px-3 text-sm">
                       <option value="Spirits">Spirits</option>
                       <option value="Wine">Wine</option>
                       <option value="Beer">Beer</option>
@@ -264,17 +271,20 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Image URL</label>
-                    <Input value={productFormData.imageUrl} onChange={e => setProductFormData({...productFormData, imageUrl: e.target.value})} className="bg-background border-white/10" />
+                    <label className="text-xs font-bold uppercase opacity-50">Image URL / Upload</label>
+                    <div className="flex gap-2">
+                      <Input value={productFormData.imageUrl} onChange={e => setProductFormData({...productFormData, imageUrl: e.target.value})} className="bg-background border-white/10 h-12 rounded-xl flex-1" placeholder="https://..." />
+                      <Button onClick={() => triggerUpload('product', 'imageUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase opacity-50">Description</label>
-                  <Textarea value={productFormData.description} onChange={e => setProductFormData({...productFormData, description: e.target.value})} className="bg-background border-white/10" />
+                  <Textarea value={productFormData.description} onChange={e => setProductFormData({...productFormData, description: e.target.value})} className="bg-background border-white/10 min-h-[100px] rounded-xl" />
                 </div>
                 <div className="flex gap-4">
-                  <Button onClick={handleSaveProduct} className="flex-1">SAVE PRODUCT</Button>
-                  <Button onClick={() => setIsAddingProduct(false)} variant="ghost">CANCEL</Button>
+                  <Button onClick={handleSaveProduct} className="flex-1 h-12 rounded-xl font-bold uppercase tracking-widest bg-accent text-accent-foreground">SAVE PRODUCT</Button>
+                  <Button onClick={() => setIsAddingProduct(false)} variant="ghost" className="h-12 rounded-xl">CANCEL</Button>
                 </div>
               </Card>
             )}
@@ -303,7 +313,7 @@ export default function AdminDashboard() {
           <TabsContent value="combos" className="space-y-10">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-headline uppercase">Curated Combos</h2>
-              <Button onClick={() => setIsAddingCombo(true)} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> NEW COMBO</Button>
+              <Button onClick={() => {setIsAddingCombo(true); setComboFormData({name: "", description: "", liquorProductId: "", snackProductId: "", imageUrl: ""}); setEditingComboId(null);}} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> NEW COMBO</Button>
             </div>
 
             {isAddingCombo && (
@@ -311,15 +321,18 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Combo Name</label>
-                    <Input value={comboFormData.name} onChange={e => setComboFormData({...comboFormData, name: e.target.value})} className="bg-background border-white/10" />
+                    <Input value={comboFormData.name} onChange={e => setComboFormData({...comboFormData, name: e.target.value})} className="bg-background border-white/10 h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Combo Image URL</label>
-                    <Input value={comboFormData.imageUrl} onChange={e => setComboFormData({...comboFormData, imageUrl: e.target.value})} className="bg-background border-white/10" />
+                    <label className="text-xs font-bold uppercase opacity-50">Combo Image URL / Upload</label>
+                    <div className="flex gap-2">
+                      <Input value={comboFormData.imageUrl} onChange={e => setComboFormData({...comboFormData, imageUrl: e.target.value})} className="bg-background border-white/10 h-12 rounded-xl flex-1" placeholder="https://..." />
+                      <Button onClick={() => triggerUpload('pairing', 'imageUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Liquor Product</label>
-                    <select value={comboFormData.liquorProductId} onChange={e => setComboFormData({...comboFormData, liquorProductId: e.target.value})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
+                    <select value={comboFormData.liquorProductId} onChange={e => setComboFormData({...comboFormData, liquorProductId: e.target.value})} className="w-full h-12 bg-background border border-white/10 rounded-xl px-3 text-sm">
                       <option value="">Select Liquor</option>
                       {products?.filter(p => ['Spirits', 'Wine', 'Beer'].includes(p.category)).map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -328,7 +341,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Snack Product</label>
-                    <select value={comboFormData.snackProductId} onChange={e => setComboFormData({...comboFormData, snackProductId: e.target.value})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
+                    <select value={comboFormData.snackProductId} onChange={e => setComboFormData({...comboFormData, snackProductId: e.target.value})} className="w-full h-12 bg-background border border-white/10 rounded-xl px-3 text-sm">
                       <option value="">Select Snack</option>
                       {products?.filter(p => p.category === 'Snacks').map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -338,11 +351,11 @@ export default function AdminDashboard() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase opacity-50">Combo Description</label>
-                  <Textarea value={comboFormData.description} onChange={e => setComboFormData({...comboFormData, description: e.target.value})} className="bg-background border-white/10" />
+                  <Textarea value={comboFormData.description} onChange={e => setComboFormData({...comboFormData, description: e.target.value})} className="bg-background border-white/10 min-h-[100px] rounded-xl" />
                 </div>
                 <div className="flex gap-4">
-                  <Button onClick={handleSaveCombo} className="flex-1">SAVE COMBO</Button>
-                  <Button onClick={() => setIsAddingCombo(false)} variant="ghost">CANCEL</Button>
+                  <Button onClick={handleSaveCombo} className="flex-1 h-12 rounded-xl font-bold uppercase tracking-widest bg-accent text-accent-foreground">SAVE COMBO</Button>
+                  <Button onClick={() => setIsAddingCombo(false)} variant="ghost" className="h-12 rounded-xl">CANCEL</Button>
                 </div>
               </Card>
             )}
@@ -440,15 +453,18 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Store Name</label>
-                    <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} />
+                    <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} className="rounded-xl h-12" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Logo URL</label>
-                    <Input value={storeSettings?.logoUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {logoUrl: e.target.value}, {merge: true})} />
+                    <label className="text-xs font-bold uppercase opacity-50">Logo URL / Upload</label>
+                    <div className="flex gap-2">
+                      <Input value={storeSettings?.logoUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {logoUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
+                      <Button onClick={() => triggerUpload('settings', 'logoUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Delivery Fee (NRS)</label>
-                    <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} />
+                    <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} className="rounded-xl h-12" />
                   </div>
                 </div>
               </section>
@@ -458,11 +474,15 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {['spirits', 'wine', 'beer', 'snacks', 'vapes'].map(cat => (
                     <div key={cat} className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">{cat} IMAGE URL</label>
-                      <Input 
-                        value={(storeSettings as any)?.[`${cat}ImageUrl`] || ""} 
-                        onChange={e => setDocumentNonBlocking(settingsRef!, {[`${cat}ImageUrl`]: e.target.value}, {merge: true})} 
-                      />
+                      <label className="text-xs font-bold uppercase opacity-50">{cat} IMAGE URL / UPLOAD</label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={(storeSettings as any)?.[`${cat}ImageUrl`] || ""} 
+                          onChange={e => setDocumentNonBlocking(settingsRef!, {[`${cat}ImageUrl`]: e.target.value}, {merge: true})} 
+                          className="rounded-xl h-12 flex-1"
+                        />
+                        <Button onClick={() => triggerUpload('settings', `${cat}ImageUrl`)} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
+                      </div>
                     </div>
                   ))}
                 </div>
