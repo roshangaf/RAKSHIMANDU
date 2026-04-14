@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, useDoc, setDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, orderBy } from "firebase/firestore";
-import { Product, Order, UserProfile, StoreSettings, Driver, Pairing } from "@/lib/types";
+import { collection, doc, query, orderBy, limit } from "firebase/firestore";
+import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Phone, Instagram, Facebook, MessageSquare, Image as ImageIcon
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Phone, Instagram, Facebook, MessageSquare, Image as ImageIcon,
+  BarChart3, Users as UsersIcon, Wine, Package, ShoppingBag, DollarSign, TrendingUp, Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area 
+} from 'recharts';
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -26,18 +30,15 @@ export default function AdminDashboard() {
   
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [isAddingCombo, setIsAddingCombo] = useState(false);
+  const [editingComboId, setEditingComboId] = useState<string | null>(null);
   
   const [productFormData, setProductFormData] = useState<Partial<Product>>({
-    name: "",
-    brand: "",
-    description: "",
-    price: 0,
-    category: "Spirits",
-    imageUrl: "",
-    rating: 5,
-    isAgeRestricted: true,
-    stockStatus: 'in-stock',
-    stockQuantity: 0
+    name: "", brand: "", description: "", price: 0, category: "Spirits", imageUrl: "", rating: 5, isAgeRestricted: true, stockStatus: 'in-stock', stockQuantity: 0
+  });
+
+  const [comboFormData, setComboFormData] = useState<Partial<Pairing>>({
+    name: "", description: "", liquorProductId: "", snackProductId: "", imageUrl: ""
   });
 
   const adminRoleRef = useMemoFirebase(() => {
@@ -46,87 +47,74 @@ export default function AdminDashboard() {
   }, [firestore, user]);
   
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  
   const isAdminConfirmed = !!adminRole || user?.uid === "Q3AAJKZAPvZYvcTEkLatjWP1ftD2";
   const isStatusChecking = isUserLoading || isAdminRoleLoading;
 
+  // Collections
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore || isStatusChecking || !isAdminConfirmed) return null;
+    if (!firestore || !isAdminConfirmed) return null;
     return query(collection(firestore, "products"), orderBy("name"));
-  }, [firestore, isStatusChecking, isAdminConfirmed]);
+  }, [firestore, isAdminConfirmed]);
 
   const ordersQuery = useMemoFirebase(() => {
-    if (!firestore || isStatusChecking || !isAdminConfirmed) return null;
+    if (!firestore || !isAdminConfirmed) return null;
     return query(collection(firestore, "orders"), orderBy("orderDate", "desc"));
-  }, [firestore, isStatusChecking, isAdminConfirmed]);
+  }, [firestore, isAdminConfirmed]);
+
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdminConfirmed) return null;
+    return query(collection(firestore, "users"), orderBy("email"));
+  }, [firestore, isAdminConfirmed]);
+
+  const pairingsQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdminConfirmed) return null;
+    return query(collection(firestore, "pairings"), orderBy("name"));
+  }, [firestore, isAdminConfirmed]);
 
   const settingsRef = useMemoFirebase(() => {
-    if (!firestore || isStatusChecking || !isAdminConfirmed) return null;
+    if (!firestore || !isAdminConfirmed) return null;
     return doc(firestore, "settings", "store_config");
-  }, [firestore, isStatusChecking, isAdminConfirmed]);
+  }, [firestore, isAdminConfirmed]);
 
-  const { data: products, isLoading: isProductsLoading } = useCollection<Product>(productsQuery);
+  const { data: products } = useCollection<Product>(productsQuery);
   const { data: orders } = useCollection<Order>(ordersQuery);
+  const { data: users } = useCollection<UserProfile>(usersQuery);
+  const { data: pairings } = useCollection<Pairing>(pairingsQuery);
   const { data: storeSettings } = useDoc<StoreSettings>(settingsRef);
+
+  // Analytics Calculation
+  const stats = useMemo(() => {
+    if (!orders || !products || !users) return null;
+    const completedOrders = orders.filter(o => o.status === 'completed');
+    const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    
+    // Group sales by date for chart
+    const salesByDate = completedOrders.reduce((acc: any, order) => {
+      const date = new Date(order.orderDate).toLocaleDateString();
+      acc[date] = (acc[date] || 0) + order.totalAmount;
+      return acc;
+    }, {});
+
+    const chartData = Object.entries(salesByDate).map(([date, total]) => ({ date, total })).slice(-7);
+
+    return {
+      totalRevenue,
+      orderCount: orders.length,
+      userCount: users.length,
+      productCount: products.length,
+      chartData
+    };
+  }, [orders, products, users]);
 
   const handleFileUpload = (field: keyof StoreSettings, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 800000) {
-      toast({ variant: "destructive", title: "File too large", description: "Keep images under 800KB." });
-      return;
-    }
-
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setDocumentNonBlocking(settingsRef!, { [field]: base64String }, { merge: true });
+      setDocumentNonBlocking(settingsRef!, { [field]: reader.result as string }, { merge: true });
       toast({ title: "Image Uploaded" });
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleFormImageUpload = (
-    setter: React.Dispatch<React.SetStateAction<any>>,
-    currentData: any,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 800000) {
-      toast({ variant: "destructive", title: "File too large" });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setter({ ...currentData, imageUrl: base64String });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const downloadSalesReport = () => {
-    if (!orders || orders.length === 0) {
-      toast({ title: "No Data", description: "No orders found.", variant: "destructive" });
-      return;
-    }
-    const pdf = new jsPDF();
-    const reportDate = new Date().toLocaleDateString();
-    pdf.setFontSize(22);
-    pdf.text((storeSettings?.storeName || "RAKSHIMANDU").toUpperCase(), 14, 20);
-    pdf.setFontSize(16);
-    pdf.text("SALES REPORT", 14, 30);
-    pdf.setFontSize(10);
-    pdf.text(`Generated: ${reportDate}`, 14, 38);
-    autoTable(pdf, {
-      startY: 45,
-      head: [['ORDER ID', 'CUSTOMER', 'AMOUNT', 'STATUS', 'DATE']],
-      body: orders.map(o => [o.id.slice(-8).toUpperCase(), o.customerName, `NRS ${o.totalAmount}`, o.status, new Date(o.orderDate).toLocaleDateString()]),
-    });
-    pdf.save("sales_report.pdf");
   };
 
   const handleSaveProduct = () => {
@@ -139,13 +127,37 @@ export default function AdminDashboard() {
     } else {
       addDocumentNonBlocking(collection(firestore, "products"), { ...productFormData, id: Date.now().toString() });
     }
-    resetProductForm();
+    setIsAddingProduct(false);
+    setEditingProductId(null);
   };
 
-  const resetProductForm = () => {
-    setProductFormData({ name: "", brand: "", description: "", price: 0, category: "Spirits", imageUrl: "", rating: 5, isAgeRestricted: true, stockStatus: 'in-stock', stockQuantity: 0 });
-    setEditingProductId(null);
-    setIsAddingProduct(false);
+  const handleSaveCombo = () => {
+    if (!comboFormData.name || !comboFormData.liquorProductId || !comboFormData.snackProductId) {
+      toast({ title: "Missing Data", variant: "destructive" });
+      return;
+    }
+    if (editingComboId) {
+      updateDocumentNonBlocking(doc(firestore, "pairings", editingComboId), comboFormData);
+    } else {
+      addDocumentNonBlocking(collection(firestore, "pairings"), { ...comboFormData, id: Date.now().toString() });
+    }
+    setIsAddingCombo(false);
+    setEditingComboId(null);
+  };
+
+  const downloadSalesReport = () => {
+    if (!orders?.length) return;
+    const pdf = new jsPDF();
+    pdf.setFontSize(22);
+    pdf.text((storeSettings?.storeName || "RAKSHIMANDU").toUpperCase(), 14, 20);
+    pdf.setFontSize(16);
+    pdf.text("SALES REPORT", 14, 30);
+    autoTable(pdf, {
+      startY: 45,
+      head: [['ID', 'CUSTOMER', 'AMOUNT', 'STATUS', 'DATE']],
+      body: orders.map(o => [o.id.slice(-6), o.customerName, `NRS ${o.totalAmount}`, o.status, new Date(o.orderDate).toLocaleDateString()]),
+    });
+    pdf.save("sales_report.pdf");
   };
 
   if (isStatusChecking) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
@@ -155,42 +167,95 @@ export default function AdminDashboard() {
     <main className="min-h-screen bg-background pb-20">
       <Navbar />
       <div className="container mx-auto px-4 pt-28">
-        <header className="mb-12 flex justify-between items-end">
-          <h1 className="text-6xl font-headline uppercase leading-none">
-            {storeSettings?.storeName || "RAKSHIMANDU"} <span className="text-accent">ADMIN</span>
-          </h1>
-          <Button onClick={downloadSalesReport} variant="outline" className="rounded-full">
-            <Download className="mr-2 w-4 h-4" /> SALES REPORT
+        <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div>
+            <h1 className="text-6xl font-headline uppercase leading-none tracking-tight">
+              {storeSettings?.storeName || "RAKSHIMANDU"} <span className="text-accent">DASHBOARD</span>
+            </h1>
+            <p className="text-muted-foreground mt-2 uppercase tracking-widest text-xs font-bold opacity-60">Control Center & Analytics</p>
+          </div>
+          <Button onClick={downloadSalesReport} variant="outline" className="rounded-full border-white/10 hover:bg-white/5">
+            <Download className="mr-2 w-4 h-4" /> EXPORT SALES DATA
           </Button>
         </header>
 
-        <Tabs defaultValue="products" className="space-y-10">
-          <TabsList className="bg-card border border-white/5 h-auto p-1 grid grid-cols-3 gap-1 rounded-2xl">
-            <TabsTrigger value="products">CATALOG</TabsTrigger>
-            <TabsTrigger value="orders">ORDERS</TabsTrigger>
-            <TabsTrigger value="settings">SYSTEM PREFERENCES</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-10">
+          <TabsList className="bg-card border border-white/5 h-auto p-1 grid grid-cols-3 md:grid-cols-6 gap-1 rounded-2xl">
+            <TabsTrigger value="overview" className="flex gap-2"><BarChart3 className="w-4 h-4" /> OVERVIEW</TabsTrigger>
+            <TabsTrigger value="products" className="flex gap-2"><Package className="w-4 h-4" /> ITEMS</TabsTrigger>
+            <TabsTrigger value="combos" className="flex gap-2"><Wine className="w-4 h-4" /> COMBOS</TabsTrigger>
+            <TabsTrigger value="orders" className="flex gap-2"><ShoppingBag className="w-4 h-4" /> ORDERS</TabsTrigger>
+            <TabsTrigger value="users" className="flex gap-2"><UsersIcon className="w-4 h-4" /> USERS</TabsTrigger>
+            <TabsTrigger value="settings" className="flex gap-2"><Settings className="w-4 h-4" /> SYSTEM</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="space-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { label: "Total Revenue", value: `NRS ${stats?.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500" },
+                { label: "Total Orders", value: stats?.orderCount, icon: ShoppingBag, color: "text-blue-500" },
+                { label: "Active Users", value: stats?.userCount, icon: UsersIcon, color: "text-purple-500" },
+                { label: "Products in Cellar", value: stats?.productCount, icon: Package, color: "text-orange-500" },
+              ].map((stat, i) => (
+                <Card key={i} className="bg-card border-white/5 p-6 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-50">{stat.label}</p>
+                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                  </div>
+                  <p className="text-4xl font-headline tracking-tight">{stat.value}</p>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="bg-card border-white/5 p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-2xl font-headline uppercase flex items-center gap-2">
+                  <TrendingUp className="text-accent w-6 h-6" /> Sales Performance
+                </h3>
+              </div>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats?.chartData}>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="white" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="white" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                    <XAxis dataKey="date" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `NRS ${val}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #333', borderRadius: '12px' }}
+                      itemStyle={{ color: 'white', fontWeight: 'bold' }}
+                    />
+                    <Area type="monotone" dataKey="total" stroke="white" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="products" className="space-y-10">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-headline uppercase">Items In Cellar</h2>
-              <Button onClick={() => setIsAddingProduct(true)} className="rounded-full"><Plus className="mr-2" /> ADD NEW ITEM</Button>
+              <Button onClick={() => setIsAddingProduct(true)} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> ADD ITEM</Button>
             </div>
 
             {isAddingProduct && (
-              <Card className="bg-card border-accent/30 p-8 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card className="bg-card border-accent/30 p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Item Name</label>
-                    <Input value={productFormData.name} onChange={e => setProductFormData({...productFormData, name: e.target.value})} />
+                    <Input value={productFormData.name} onChange={e => setProductFormData({...productFormData, name: e.target.value})} className="bg-background border-white/10" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Price (NRS)</label>
-                    <Input type="number" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: Number(e.target.value)})} />
+                    <Input type="number" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: Number(e.target.value)})} className="bg-background border-white/10" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase opacity-50">Category</label>
-                    <select value={productFormData.category} onChange={e => setProductFormData({...productFormData, category: e.target.value as any})} className="w-full h-10 bg-background border rounded-md px-3 text-sm">
+                    <select value={productFormData.category} onChange={e => setProductFormData({...productFormData, category: e.target.value as any})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
                       <option value="Spirits">Spirits</option>
                       <option value="Wine">Wine</option>
                       <option value="Beer">Beer</option>
@@ -199,26 +264,22 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase opacity-50">Image Source (URL or Upload)</label>
-                    <div className="flex gap-2">
-                      <Input value={productFormData.imageUrl} onChange={e => setProductFormData({...productFormData, imageUrl: e.target.value})} className="flex-1" />
-                      <input type="file" className="hidden" ref={el => fileInputRefs.current['prod'] = el} onChange={e => handleFormImageUpload(setProductFormData, productFormData, e)} />
-                      <Button size="icon" variant="outline" onClick={() => fileInputRefs.current['prod']?.click()}><Upload className="w-4 h-4" /></Button>
-                    </div>
+                    <label className="text-xs font-bold uppercase opacity-50">Image URL</label>
+                    <Input value={productFormData.imageUrl} onChange={e => setProductFormData({...productFormData, imageUrl: e.target.value})} className="bg-background border-white/10" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase opacity-50">Description</label>
-                  <Textarea value={productFormData.description} onChange={e => setProductFormData({...productFormData, description: e.target.value})} />
+                  <Textarea value={productFormData.description} onChange={e => setProductFormData({...productFormData, description: e.target.value})} className="bg-background border-white/10" />
                 </div>
                 <div className="flex gap-4">
-                  <Button onClick={handleSaveProduct} className="flex-1">SAVE TO CELLAR</Button>
-                  <Button onClick={resetProductForm} variant="ghost">CANCEL</Button>
+                  <Button onClick={handleSaveProduct} className="flex-1">SAVE PRODUCT</Button>
+                  <Button onClick={() => setIsAddingProduct(false)} variant="ghost">CANCEL</Button>
                 </div>
               </Card>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {products?.map(product => (
                 <Card key={product.id} className="bg-card border-white/5 overflow-hidden group">
                   <div className="aspect-square relative">
@@ -239,94 +300,173 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-12">
-            <Card className="bg-card border-white/5 p-8 space-y-10">
-              <div className="space-y-10">
-                <section className="space-y-6">
-                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Branding & Identity</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Store Name</label>
-                      <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Club Name</label>
-                      <Input value={storeSettings?.clubName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {clubName: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Delivery Fee (NRS)</label>
-                      <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} />
-                    </div>
-                  </div>
-                </section>
+          <TabsContent value="combos" className="space-y-10">
+            <div className="flex justify-between items-center">
+              <h2 className="text-3xl font-headline uppercase">Curated Combos</h2>
+              <Button onClick={() => setIsAddingCombo(true)} className="rounded-full bg-accent text-accent-foreground"><Plus className="mr-2 w-4 h-4" /> NEW COMBO</Button>
+            </div>
 
-                <section className="space-y-6">
-                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Contact & Socials</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50 flex items-center gap-2"><Phone className="w-3 h-3" /> Contact Number</label>
-                      <Input value={storeSettings?.contactNumber || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {contactNumber: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50 flex items-center gap-2"><MessageSquare className="w-3 h-3" /> WhatsApp Number</label>
-                      <Input value={storeSettings?.whatsappNumber || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {whatsappNumber: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50 flex items-center gap-2"><Instagram className="w-3 h-3" /> Instagram URL</label>
-                      <Input value={storeSettings?.instagramUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {instagramUrl: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50 flex items-center gap-2"><Facebook className="w-3 h-3" /> Facebook URL</label>
-                      <Input value={storeSettings?.facebookUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {facebookUrl: e.target.value}, {merge: true})} />
-                    </div>
+            {isAddingCombo && (
+              <Card className="bg-card border-accent/30 p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Combo Name</label>
+                    <Input value={comboFormData.name} onChange={e => setComboFormData({...comboFormData, name: e.target.value})} className="bg-background border-white/10" />
                   </div>
-                </section>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Combo Image URL</label>
+                    <Input value={comboFormData.imageUrl} onChange={e => setComboFormData({...comboFormData, imageUrl: e.target.value})} className="bg-background border-white/10" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Liquor Product</label>
+                    <select value={comboFormData.liquorProductId} onChange={e => setComboFormData({...comboFormData, liquorProductId: e.target.value})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
+                      <option value="">Select Liquor</option>
+                      {products?.filter(p => ['Spirits', 'Wine', 'Beer'].includes(p.category)).map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Snack Product</label>
+                    <select value={comboFormData.snackProductId} onChange={e => setComboFormData({...comboFormData, snackProductId: e.target.value})} className="w-full h-10 bg-background border border-white/10 rounded-md px-3 text-sm">
+                      <option value="">Select Snack</option>
+                      {products?.filter(p => p.category === 'Snacks').map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase opacity-50">Combo Description</label>
+                  <Textarea value={comboFormData.description} onChange={e => setComboFormData({...comboFormData, description: e.target.value})} className="bg-background border-white/10" />
+                </div>
+                <div className="flex gap-4">
+                  <Button onClick={handleSaveCombo} className="flex-1">SAVE COMBO</Button>
+                  <Button onClick={() => setIsAddingCombo(false)} variant="ghost">CANCEL</Button>
+                </div>
+              </Card>
+            )}
 
-                <section className="space-y-6">
-                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Imagery Configuration</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {[
-                      { label: "Store Logo", field: "logoUrl" as keyof StoreSettings },
-                      { label: "Favicon URL", field: "faviconUrl" as keyof StoreSettings },
-                      { label: "Hero Image", field: "heroImageUrl" as keyof StoreSettings },
-                      { label: "Delivery Background", field: "deliveryImageUrl" as keyof StoreSettings },
-                      { label: "Club Background", field: "clubImageUrl" as keyof StoreSettings },
-                      { label: "Spirits Category", field: "spiritsImageUrl" as keyof StoreSettings },
-                      { label: "Wine Category", field: "wineImageUrl" as keyof StoreSettings },
-                      { label: "Beer Category", field: "beerImageUrl" as keyof StoreSettings },
-                      { label: "Snacks Category", field: "snacksImageUrl" as keyof StoreSettings },
-                      { label: "Vapes Category", field: "vapesImageUrl" as keyof StoreSettings },
-                    ].map((item) => (
-                      <div key={item.field} className="space-y-2">
-                        <label className="text-xs font-bold uppercase opacity-50 flex items-center gap-2"><ImageIcon className="w-3 h-3" /> {item.label}</label>
-                        <div className="flex gap-2">
-                          <Input value={storeSettings?.[item.field] as string || ""} onChange={e => setDocumentNonBlocking(settingsRef!, { [item.field]: e.target.value }, { merge: true })} className="flex-1" />
-                          <input type="file" className="hidden" ref={el => fileInputRefs.current[item.field] = el} onChange={e => handleFileUpload(item.field, e)} />
-                          <Button size="icon" variant="outline" onClick={() => fileInputRefs.current[item.field]?.click()}><Upload className="w-4 h-4" /></Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {pairings?.map(combo => (
+                <Card key={combo.id} className="bg-card border-white/5 p-6 flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                    <Wine className="w-8 h-8 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-headline text-xl uppercase truncate">{combo.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{combo.description}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => {setComboFormData(combo); setEditingComboId(combo.id); setIsAddingCombo(true);}}><Settings className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'pairings', combo.id))} className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-6">
+            <div className="grid gap-4">
+              {orders?.map(order => (
+                <Card key={order.id} className="bg-card border-white/5 p-6">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <span className="font-headline text-2xl uppercase">#{order.id.slice(-6)}</span>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                          order.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {order.status}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
-                
-                <section className="space-y-6">
-                  <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Hero & Club Copy</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Hero Title</label>
-                      <Input value={storeSettings?.heroTitle || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroTitle: e.target.value}, {merge: true})} />
+                      <p className="text-sm font-bold text-accent">{order.customerName}</p>
+                      <p className="text-xs opacity-50">{new Date(order.orderDate).toLocaleString()}</p>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Hero Subtitle</label>
-                      <Input value={storeSettings?.heroSubtitle || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {heroSubtitle: e.target.value}, {merge: true})} />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Club Description</label>
-                      <Textarea value={storeSettings?.clubDescription || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {clubDescription: e.target.value}, {merge: true})} />
+                    <div className="flex flex-col md:items-end gap-2">
+                      <p className="text-2xl font-headline">NRS {order.totalAmount}</p>
+                      <div className="flex gap-2">
+                        {order.status !== 'completed' && (
+                          <Button size="sm" onClick={() => updateDocumentNonBlocking(doc(firestore, "orders", order.id), { status: 'completed' })} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">MARK DELIVERED</Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-8 text-[10px] font-bold text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, "orders", order.id))}>DELETE</Button>
+                      </div>
                     </div>
                   </div>
-                </section>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <div className="bg-card border border-white/5 rounded-2xl overflow-hidden">
+              <div className="p-4 bg-white/5 border-b border-white/5 grid grid-cols-4 text-[10px] font-bold uppercase tracking-widest opacity-50">
+                <span>Customer</span>
+                <span>Points</span>
+                <span>Role</span>
+                <span className="text-right">Actions</span>
               </div>
+              <div className="divide-y divide-white/5">
+                {users?.map(u => (
+                  <div key={u.id} className="p-4 grid grid-cols-4 items-center">
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm truncate">{u.firstName} {u.lastName}</p>
+                      <p className="text-[10px] opacity-40 truncate">{u.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Star className="w-3 h-3 text-yellow-500" />
+                      <span className="font-headline text-lg">{u.loyaltyPoints}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full ${u.isAdmin ? 'bg-accent text-accent-foreground' : 'bg-white/10'}`}>
+                        {u.isAdmin ? "ADMIN" : "CUSTOMER"}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <Button size="sm" variant="ghost" className="text-accent h-7 text-[10px]" onClick={() => updateDocumentNonBlocking(doc(firestore, "users", u.id), { isAdmin: !u.isAdmin })}>
+                        TOGGLE ROLE
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-12">
+            <Card className="bg-card border-white/5 p-8 space-y-10">
+              <section className="space-y-6">
+                <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Branding & Identity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Store Name</label>
+                    <Input value={storeSettings?.storeName || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {storeName: e.target.value}, {merge: true})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Logo URL</label>
+                    <Input value={storeSettings?.logoUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {logoUrl: e.target.value}, {merge: true})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase opacity-50">Delivery Fee (NRS)</label>
+                    <Input type="number" value={storeSettings?.deliveryFee || 150} onChange={e => setDocumentNonBlocking(settingsRef!, {deliveryFee: Number(e.target.value)}, {merge: true})} />
+                  </div>
+                </div>
+              </section>
+              
+              <section className="space-y-6">
+                <h3 className="text-2xl font-headline uppercase border-b border-white/5 pb-2">Category Imagery</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {['spirits', 'wine', 'beer', 'snacks', 'vapes'].map(cat => (
+                    <div key={cat} className="space-y-2">
+                      <label className="text-xs font-bold uppercase opacity-50">{cat} IMAGE URL</label>
+                      <Input 
+                        value={(storeSettings as any)?.[`${cat}ImageUrl`] || ""} 
+                        onChange={e => setDocumentNonBlocking(settingsRef!, {[`${cat}ImageUrl`]: e.target.value}, {merge: true})} 
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
             </Card>
           </TabsContent>
         </Tabs>
