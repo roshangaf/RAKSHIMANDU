@@ -490,13 +490,6 @@ export default function AdminDashboard() {
                         <Button onClick={() => triggerUpload('settings', 'logoUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-50">Favicon URL / Upload</label>
-                      <div className="flex gap-2">
-                        <Input value={storeSettings?.faviconUrl || ""} onChange={e => setDocumentNonBlocking(settingsRef!, {faviconUrl: e.target.value}, {merge: true})} className="rounded-xl h-12 flex-1" />
-                        <Button onClick={() => triggerUpload('settings', 'faviconUrl')} variant="secondary" className="h-12 w-12 rounded-xl shrink-0"><Upload className="w-4 h-4" /></Button>
-                      </div>
-                    </div>
                   </div>
                 </section>
 
