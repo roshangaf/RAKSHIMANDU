@@ -84,7 +84,7 @@ export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
               <div className="relative z-10 flex flex-col items-center">
                 <Truck className="w-12 h-12 text-accent animate-bounce mb-2" />
                 <span className="text-sm font-bold uppercase tracking-widest">
-                  {order.status === 'completed' ? 'Arrived!' : 'Shereeee is on the move'}
+                  {order.status === 'completed' ? 'Arrived!' : 'Sher Bahadur is on the move'}
                 </span>
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Your Courier</p>
-                  <p className="font-headline text-lg">SHEREEEE</p>
+                  <p className="font-headline text-lg">SHER BAHADUR</p>
                 </div>
               </div>
               <div className="text-right">

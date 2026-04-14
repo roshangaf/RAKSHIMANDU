@@ -125,7 +125,7 @@ export function HeroBanner() {
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Nearest Buddy</p>
-                        <p className="font-headline text-xl leading-none">SHEREEEE</p>
+                        <p className="font-headline text-xl leading-none">SHER BAHADUR</p>
                         <div className="flex items-center gap-1 mt-1">
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                           <span className="text-[10px] text-green-400 font-bold uppercase">Ready to roll</span>
@@ -135,7 +135,7 @@ export function HeroBanner() {
                     
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-                        We deliver to all areas within the valley. Shereeee is currently stationed nearby.
+                        We deliver to all areas within the valley. Sher Bahadur is currently stationed nearby.
                       </p>
                       <div className="flex items-center justify-between pt-2 border-t border-white/5">
                         <div className="text-center flex-1 border-r border-white/5">

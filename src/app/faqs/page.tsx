@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from "@/components/layout/Navbar";
@@ -20,7 +21,7 @@ const FAQ_DATA = [
       },
       {
         q: "What is the average delivery time?",
-        a: "Our average delivery time is under 30 minutes. Depending on your exact location in the valley, 'Shereeee' and our other buddies usually arrive within 20-25 minutes."
+        a: "Our average delivery time is under 30 minutes. Depending on your exact location in the valley, 'Sher Bahadur' and our other buddies usually arrive within 20-25 minutes."
       },
       {
         q: "Where do you deliver?",
