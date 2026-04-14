@@ -12,7 +12,7 @@ import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBl
 import { collection, doc, query, orderBy } from "firebase/firestore";
 import { Product, Order, UserProfile, StoreSettings, Pairing } from "@/lib/types";
 import { 
-  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon
+  Plus, Trash2, Settings, Loader2, Download, Upload, Star, Wine, Package, ShoppingBag, DollarSign, TrendingUp, BarChart3, Users as UsersIcon, ImageIcon, Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
@@ -85,8 +85,19 @@ export default function AdminDashboard() {
   // Analytics
   const stats = useMemo(() => {
     if (!orders || !products || !users) return null;
+    
+    const now = new Date();
+    const todayStr = now.toLocaleDateString();
+
     const completedOrders = orders.filter(o => o.status === 'completed');
     const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    
+    const dailySales = orders
+      .filter(o => new Date(o.orderDate).toLocaleDateString() === todayStr)
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+
+    const activeOrdersCount = orders.filter(o => ['pending', 'preparing', 'out-for-delivery'].includes(o.status)).length;
+
     const salesByDate = completedOrders.reduce((acc: any, order) => {
       const date = new Date(order.orderDate).toLocaleDateString();
       acc[date] = (acc[date] || 0) + order.totalAmount;
@@ -94,7 +105,15 @@ export default function AdminDashboard() {
     }, {});
     const chartData = Object.entries(salesByDate).map(([date, total]) => ({ date, total })).slice(-7);
 
-    return { totalRevenue, orderCount: orders.length, userCount: users.length, productCount: products.length, chartData };
+    return { 
+      totalRevenue, 
+      dailySales,
+      activeOrdersCount,
+      orderCount: orders.length, 
+      userCount: users.length, 
+      productCount: products.length, 
+      chartData 
+    };
   }, [orders, products, users]);
 
   const triggerUpload = (type: 'product' | 'pairing' | 'settings', field: string) => {
@@ -202,12 +221,14 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {[
                 { label: "Total Revenue", value: `NRS ${stats?.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500" },
+                { label: "Today's Sales", value: `NRS ${stats?.dailySales.toLocaleString()}`, icon: TrendingUp, color: "text-emerald-500" },
+                { label: "Active Orders", value: stats?.activeOrdersCount, icon: Zap, color: "text-yellow-500" },
                 { label: "Total Orders", value: stats?.orderCount, icon: ShoppingBag, color: "text-blue-500" },
                 { label: "Active Users", value: stats?.userCount, icon: UsersIcon, color: "text-purple-500" },
-                { label: "Products in Cellar", value: stats?.productCount, icon: Package, color: "text-orange-500" },
+                { label: "Items in Cellar", value: stats?.productCount, icon: Package, color: "text-orange-500" },
               ].map((stat, i) => (
                 <Card key={i} className="bg-card border-white/5 p-6 space-y-2">
                   <div className="flex justify-between items-start">
