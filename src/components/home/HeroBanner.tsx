@@ -87,7 +87,7 @@ export function HeroBanner() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-4 w-full px-4 md:px-0">
             <Link href="/products" className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-bold px-12 h-14 text-lg shadow-xl">
-                BROWSE CATALOG <ArrowRight className="ml-2 w-6 h-6" />
+                BROWSE ITEM <ArrowRight className="ml-2 w-6 h-6" />
               </Button>
             </Link>
             
