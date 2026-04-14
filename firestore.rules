@@ -64,13 +64,19 @@ service cloud.firestore {
 
     // Orders
     match /orders/{orderId} {
+      // List remains restricted to authenticated owners or admins
       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
-      allow get: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
-      allow create: if isSignedIn();
+      
+      // Allow get if owner, admin, or if it's a guest order (access via ID)
+      allow get: if (isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid)) || resource.data.userId == "guest";
+      
+      // Allow anyone to create an order (supports guest checkout)
+      allow create: if true;
+      
       allow update, delete: if isAdmin();
 
       match /orderItems/{orderItemId} {
-        allow read: if isSignedIn() && (isAdmin() || get(/databases/(default)/documents/orders/$(orderId)).data.userId == request.auth.uid);
+        allow read: if (isSignedIn() && (isAdmin() || get(/databases/(default)/documents/orders/$(orderId)).data.userId == request.auth.uid)) || get(/databases/(default)/documents/orders/$(orderId)).data.userId == "guest";
       }
     }
 
