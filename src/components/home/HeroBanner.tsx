@@ -120,7 +120,7 @@ export function HeroBanner() {
                           alt="Courier" 
                           width={48} 
                           height={48}
-                          className="object-cover"
+                          className="object-cover w-full h-full"
                           data-ai-hint="delivery driver"
                         />
                       </div>

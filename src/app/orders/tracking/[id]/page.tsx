@@ -128,7 +128,7 @@ export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
                   <img 
                     src={placeholderDelivery?.imageUrl || "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=60"} 
                     alt="Driver" 
-                    className="object-cover" 
+                    className="object-cover w-full h-full" 
                   />
                 </div>
                 <div>
