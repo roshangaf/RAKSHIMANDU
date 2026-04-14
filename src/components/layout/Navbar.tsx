@@ -3,9 +3,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, User, Menu, Moon, ShoppingBag, ShieldCheck, Trash2, Plus, Minus, Loader2, ArrowLeft, X } from "lucide-react";
+import { ShoppingCart, User, Menu, Moon, ShoppingBag, ShieldCheck, Trash2, Plus, Minus, Loader2, ArrowLeft, X, Phone, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   Sheet, 
   SheetContent, 
@@ -30,6 +31,7 @@ export function Navbar() {
   const { toast } = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [guestPhone, setGuestPhone] = useState("");
 
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "store_config"), [firestore]);
   const { data: storeSettings } = useDoc<StoreSettings>(settingsRef);
@@ -51,27 +53,13 @@ export function Navbar() {
   }, [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(userProfileRef);
 
-  const ordersQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(
-      collection(firestore, "orders"),
-      where("userId", "==", user.uid)
-    );
-  }, [user, firestore]);
-
-  const { data: recentOrders } = useCollection<Order>(ordersQuery);
-
-  const displayOrders = useMemo(() => {
-    if (!recentOrders) return [];
-    return [...recentOrders]
-      .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-      .slice(0, 3);
-  }, [recentOrders]);
-
   const handleCheckout = async () => {
-    if (!user) {
-      toast({ title: "Login Required" });
-      router.push('/account');
+    if (!user && !guestPhone) {
+      toast({ 
+        variant: "destructive",
+        title: "Phone Required", 
+        description: "Please provide a contact number for delivery coordination." 
+      });
       return;
     }
 
@@ -84,9 +72,11 @@ export function Navbar() {
     const expectedTime = new Date(now.getTime() + deliveryMinutes * 60000);
 
     const orderData: Omit<Order, 'id'> = {
-      userId: user.uid,
-      customerName: profile ? `${profile.firstName} ${profile.lastName}` : (user.email?.split('@')[0] || "Night Owl"),
-      customerPhone: profile?.phoneNumber || "",
+      userId: user?.uid || "guest",
+      customerName: user 
+        ? (profile ? `${profile.firstName} ${profile.lastName}` : (user.email?.split('@')[0] || "Night Owl"))
+        : "Guest Owl",
+      customerPhone: user ? (profile?.phoneNumber || "") : guestPhone,
       totalAmount: grandTotal,
       status: 'pending',
       orderDate: now.toISOString(),
@@ -105,10 +95,13 @@ export function Navbar() {
     try {
       const docRefPromise = addDocumentNonBlocking(ordersCol, orderData);
       
-      const earnedPoints = Math.floor(totalPrice / 1000) * 10;
-      if (earnedPoints > 0) {
-        const userRef = doc(firestore, "users", user.uid);
-        updateDocumentNonBlocking(userRef, { loyaltyPoints: increment(earnedPoints) });
+      // Only update points if user is logged in
+      if (user) {
+        const earnedPoints = Math.floor(totalPrice / 1000) * 10;
+        if (earnedPoints > 0) {
+          const userRef = doc(firestore, "users", user.uid);
+          updateDocumentNonBlocking(userRef, { loyaltyPoints: increment(earnedPoints) });
+        }
       }
 
       setTimeout(async () => {
@@ -116,6 +109,7 @@ export function Navbar() {
         clearCart();
         setIsCheckoutLoading(false);
         setIsSheetOpen(false);
+        setGuestPhone(""); // Reset guest phone
         
         toast({ title: "Order Successful!" });
 
@@ -127,10 +121,6 @@ export function Navbar() {
       setIsCheckoutLoading(false);
       toast({ variant: "destructive", title: "Order Failed" });
     }
-  };
-
-  const handleCartClick = () => {
-    setIsSheetOpen(!isSheetOpen);
   };
 
   return (
@@ -195,7 +185,7 @@ export function Navbar() {
                   variant="ghost" 
                   size="icon" 
                   className="relative w-10 h-10 rounded-full"
-                  onClick={handleCartClick}
+                  onClick={() => setIsSheetOpen(true)}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {totalItems > 0 && (
@@ -220,27 +210,57 @@ export function Navbar() {
                       <p className="font-headline text-2xl">EMPTY CELLAR</p>
                     </div>
                   ) : (
-                    items.map((item) => (
-                      <div key={item.id} className="flex gap-4 p-4 bg-card border border-white/5 rounded-2xl">
-                        <div className="w-20 h-20 relative rounded-xl overflow-hidden shrink-0 border border-white/5">
-                          <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
-                        </div>
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-headline text-lg uppercase truncate">{item.name}</h4>
-                            <button onClick={() => removeFromCart(item.id)}><Trash2 className="w-4 h-4 text-muted-foreground" /></button>
+                    <>
+                      {items.map((item) => (
+                        <div key={item.id} className="flex gap-4 p-4 bg-card border border-white/5 rounded-2xl">
+                          <div className="w-20 h-20 relative rounded-xl overflow-hidden shrink-0 border border-white/5">
+                            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                           </div>
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3 bg-background rounded-full px-3 py-1">
-                              <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="w-3 h-3" /></button>
-                              <span className="text-xs font-bold">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="w-3 h-3" /></button>
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-headline text-lg uppercase truncate">{item.name}</h4>
+                              <button onClick={() => removeFromCart(item.id)}><Trash2 className="w-4 h-4 text-muted-foreground" /></button>
                             </div>
-                            <span className="font-bold text-sm">NRS {item.price * item.quantity}</span>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3 bg-background rounded-full px-3 py-1">
+                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus className="w-3 h-3" /></button>
+                                <span className="text-xs font-bold">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="w-3 h-3" /></button>
+                              </div>
+                              <span className="font-bold text-sm">NRS {item.price * item.quantity}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+
+                      {!user && (
+                        <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl space-y-4">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Loyalty Disclaimer</p>
+                              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                You are not logged in. Priority points won't increase and rewards won't be earned for this order. 
+                                <Link href="/account" className="text-accent font-black underline ml-1">LOGIN FOR REWARDS</Link>
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-60 ml-1">Guest Phone Number</label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                              <Input 
+                                type="tel"
+                                placeholder="+977 98XXXXXXXX"
+                                value={guestPhone}
+                                onChange={(e) => setGuestPhone(e.target.value)}
+                                className="pl-10 h-12 bg-background border-white/5 rounded-xl text-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -249,8 +269,12 @@ export function Navbar() {
                     <span className="text-xs font-bold opacity-40 uppercase">Total</span>
                     <span className="text-4xl font-headline text-accent">NRS {grandTotal.toLocaleString()}</span>
                   </div>
-                  <Button onClick={handleCheckout} disabled={items.length === 0 || isCheckoutLoading} className="w-full h-14 bg-accent text-accent-foreground font-bold rounded-2xl">
-                    {isCheckoutLoading ? <Loader2 className="animate-spin" /> : "CHECKOUT"}
+                  <Button 
+                    onClick={handleCheckout} 
+                    disabled={items.length === 0 || isCheckoutLoading || (!user && !guestPhone)} 
+                    className="w-full h-14 bg-accent text-accent-foreground font-bold rounded-2xl"
+                  >
+                    {isCheckoutLoading ? <Loader2 className="animate-spin" /> : (user ? "CHECKOUT" : "CHECKOUT AS GUEST")}
                   </Button>
                 </div>
               </SheetContent>
