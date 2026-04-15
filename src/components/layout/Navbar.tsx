@@ -272,6 +272,16 @@ export function Navbar() {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-white/10 space-y-4">
+                  <div className="space-y-2 border-b border-white/5 pb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Subtotal</span>
+                      <span className="text-sm font-bold">NRS {totalPrice.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Delivery Fee</span>
+                      <span className="text-sm font-bold">NRS {deliveryFee.toLocaleString()}</span>
+                    </div>
+                  </div>
                   <div className="flex justify-between items-end">
                     <span className="text-xs font-bold opacity-40 uppercase">Total</span>
                     <span className="text-4xl font-headline text-accent">NRS {grandTotal.toLocaleString()}</span>
