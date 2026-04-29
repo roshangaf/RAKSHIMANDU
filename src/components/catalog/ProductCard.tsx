@@ -51,7 +51,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="overflow-hidden bg-card border-border product-card-hover group shadow-xl flex flex-col h-full">
-      <div className="relative aspect-[4/5] overflow-hidden shrink-0">
+      <div className="relative aspect-[4/5] overflow-hidden shrink-0 bg-white">
         <Image
           src={product.imageUrl}
           alt={product.name}

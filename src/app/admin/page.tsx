@@ -313,7 +313,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {products?.map(product => (
                 <Card key={product.id} className="bg-card border-white/5 overflow-hidden group">
-                  <div className="aspect-square relative">
+                  <div className="aspect-square relative bg-white">
                     <img src={product.imageUrl} className="w-full h-full object-cover" alt={product.name} />
                   </div>
                   <div className="p-4 space-y-2">
