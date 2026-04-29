@@ -71,12 +71,8 @@ function CatalogContent() {
   return (
     <div className="container mx-auto px-4 pt-32 pb-20">
       <header className="mb-20 space-y-16">
-        <div className="space-y-6 text-center md:text-left">
-          <h1 className="text-6xl md:text-9xl font-headline tracking-tighter uppercase leading-none">OUR COLLECTION</h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl font-light mx-auto md:mx-0 leading-relaxed">Explore our curated selection of fine spirits, craft beers, and artisan pairings delivered to your door.</p>
-        </div>
-
-        <div className="flex flex-col gap-12 lg:flex-row lg:items-end lg:justify-between pt-16 border-t border-white/5">
+        {/* Filters and Pull Cord moved to the top */}
+        <div className="flex flex-col gap-12 lg:flex-row lg:items-end lg:justify-between pb-16 border-b border-white/5">
           <div className="flex flex-col md:flex-row gap-6 flex-1 max-w-3xl">
             <div className="relative flex-1">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -144,6 +140,12 @@ function CatalogContent() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Heading and description shifted below the filters */}
+        <div className="space-y-6 text-center md:text-left">
+          <h1 className="text-6xl md:text-9xl font-headline tracking-tighter uppercase leading-none">OUR COLLECTION</h1>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl font-light mx-auto md:mx-0 leading-relaxed">Explore our curated selection of fine spirits, craft beers, and artisan pairings delivered to your door.</p>
         </div>
       </header>
 
