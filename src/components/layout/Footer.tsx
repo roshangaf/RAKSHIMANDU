@@ -8,6 +8,8 @@ import { useFirestore, useMemoFirebase, useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { StoreSettings } from "@/lib/types";
 
+const DEFAULT_LOGO = "https://images.unsplash.com/photo-1777465850484-f85942902c64?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D";
+
 export function Footer() {
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(firestore, "settings", "store_config"), [firestore]);
@@ -20,11 +22,7 @@ export function Footer() {
           <div className="space-y-6 flex flex-col items-center md:items-start">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-12 h-12 relative rounded-full overflow-hidden flex items-center justify-center bg-black border border-black/5">
-                {storeSettings?.logoUrl ? (
-                  <Image src={storeSettings.logoUrl} alt="Logo" fill className="object-cover" />
-                ) : (
-                  <Moon className="w-6 h-6 text-white" />
-                )}
+                <Image src={storeSettings?.logoUrl || DEFAULT_LOGO} alt="Logo" fill className="object-cover" />
               </div>
               <span className="text-2xl font-headline tracking-widest uppercase pt-1">
                 {storeSettings?.storeName || "RAKSHIMANDU"}

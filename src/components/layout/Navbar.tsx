@@ -23,6 +23,8 @@ import { useCart } from "@/providers/cart-provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
+const DEFAULT_LOGO = "https://images.unsplash.com/photo-1777465850484-f85942902c64?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D";
+
 export function Navbar() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -95,7 +97,6 @@ export function Navbar() {
     try {
       const docRefPromise = addDocumentNonBlocking(ordersCol, orderData);
       
-      // Only update points if user is logged in
       if (user) {
         const earnedPoints = Math.floor(totalPrice / 1000) * 10;
         if (earnedPoints > 0) {
@@ -109,7 +110,7 @@ export function Navbar() {
         clearCart();
         setIsCheckoutLoading(false);
         setIsSheetOpen(false);
-        setGuestPhone(""); // Reset guest phone
+        setGuestPhone("");
         
         toast({ title: "Order Successful!" });
 
@@ -153,11 +154,7 @@ export function Navbar() {
           
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 relative rounded-full overflow-hidden flex items-center justify-center border border-white/10 bg-background">
-              {storeSettings?.logoUrl ? (
-                <Image src={storeSettings.logoUrl} alt="Logo" fill className="object-cover" />
-              ) : (
-                <Moon className="w-6 h-6 text-white" />
-              )}
+              <Image src={storeSettings?.logoUrl || DEFAULT_LOGO} alt="Logo" fill className="object-cover" />
             </div>
             <span className="text-2xl font-headline tracking-widest uppercase pt-1">
               {storeSettings?.storeName || "RAKSHIMANDU"}
