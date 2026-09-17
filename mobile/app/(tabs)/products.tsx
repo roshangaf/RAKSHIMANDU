@@ -39,6 +39,7 @@ export default function ProductsScreen() {
 
       <FlatList
         horizontal
+        style={{ flexGrow: 0 }}
         data={categories}
         keyExtractor={(item) => item}
         showsHorizontalScrollIndicator={false}
@@ -59,6 +60,7 @@ export default function ProductsScreen() {
       />
 
       <FlatList
+        style={{ flex: 1 }}
         data={filtered}
         keyExtractor={(item) => item.id}
         numColumns={2}
